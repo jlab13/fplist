@@ -27,6 +27,28 @@ CMake downloads MAVLink and cJSON (pinned versions). If the system has `notcurse
 it is used; otherwise notcurses 3.0.17 is built statically inside `build/` (no multimedia, no C++).
 To force the bundled one: `-DFPL_SYSTEM_NOTCURSES=OFF`. Sanitizer build: `-DFPL_ASAN=ON`.
 
+### Debian package
+
+`tools/deb/build.sh` builds the `fpl` package (and `fpl-dbgsym` with the symbols for gdb) for Debian 13
+(trixie) in a container, so it works the same on any distribution. The packages go to `dist/<arch>/`:
+
+```sh
+tools/deb/build.sh               # for the architecture of this machine
+tools/deb/build.sh arm64         # amd64 or arm64; another architecture runs under QEMU
+sudo apt install ./dist/amd64/fpl_*.deb
+```
+
+- **What you need:** Podman, Docker or Apple `container` (the first one found; `CONTAINER_ENGINE=` picks
+  one). For another architecture you also need QEMU user emulation
+  (`pacman -S qemu-user-static qemu-user-static-binfmt`, `apt install qemu-user-binfmt`).
+  The build downloads MAVLink, cJSON and notcurses, so it needs the network.
+- **What's inside:** Debian 13 has no notcurses, so it is linked statically. The other libraries
+  (curl, expat, ncurses, libunistring, libdeflate) become dependencies through `dpkg-shlibdeps`.
+- **Version:** `<project version>+<UTC time of the last commit>`, e.g. `0.1.0+20261124231300`, so apt
+  orders the builds of one release.
+- **Maintainer:** taken from `git config user.name` / `user.email` of whoever builds the package.
+- Common settings are in `cmake/DebPackage.cmake`, and the container is in `tools/deb/`.
+
 ## Running
 
 ```sh
@@ -218,6 +240,7 @@ po/               UI translations (gettext)
 translations/     machine translations of PX4 and ArduPilot metadata
 tools/fakevehicle.c
 tools/px4-translate/, tools/ardupilot-translate/   how the metadata translations were made
+tools/deb/        Debian package build in a container
 ```
 
 ## Limitations / next steps

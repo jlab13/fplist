@@ -28,6 +28,28 @@ MAVLink і cJSON завантажуються CMake (зафіксовані ве
 (без мультимедіа і C++). Примусово використати вбудований: `-DFPL_SYSTEM_NOTCURSES=OFF`.
 Збірка з санітайзерами: `-DFPL_ASAN=ON`.
 
+### Пакет Debian
+
+`tools/deb/build.sh` збирає пакет `fpl` (і `fpl-dbgsym` із символами для gdb) для Debian 13 (trixie) у
+контейнері, тож однаково на будь-якому дистрибутиві. Пакети лягають у `dist/<arch>/`:
+
+```sh
+tools/deb/build.sh               # під архітектуру цієї машини
+tools/deb/build.sh arm64         # amd64 або arm64; чужа архітектура йде під QEMU
+sudo apt install ./dist/amd64/fpl_*.deb
+```
+
+- **Що потрібно:** Podman, Docker або Apple `container` (береться перший знайдений; `CONTAINER_ENGINE=`
+  вибирає явно). Для чужої архітектури потрібна ще емуляція QEMU
+  (`pacman -S qemu-user-static qemu-user-static-binfmt`, `apt install qemu-user-binfmt`).
+  Збірка завантажує MAVLink, cJSON і notcurses, тож потрібна мережа.
+- **Що всередині:** у Debian 13 немає notcurses, тому він вшитий статично. Решта бібліотек (curl,
+  expat, ncurses, libunistring, libdeflate) стають залежностями через `dpkg-shlibdeps`.
+- **Версія:** `<версія project()>+<час останнього коміту, UTC>`, наприклад `0.1.0+20261124231300`,
+  щоб apt правильно впорядковував збірки одного релізу.
+- **Maintainer:** береться з `git config user.name` / `user.email` того, хто збирає пакет.
+- Спільні налаштування лежать у `cmake/DebPackage.cmake`, контейнер — у `tools/deb/`.
+
 ## Запуск
 
 ```sh
@@ -214,6 +236,7 @@ po/               переклади інтерфейсу (gettext)
 translations/     машинні переклади метаданих PX4 і ArduPilot
 tools/fakevehicle.c
 tools/px4-translate/, tools/ardupilot-translate/   як згенеровано переклади метаданих
+tools/deb/        збірка пакета Debian у контейнері
 ```
 
 ## Обмеження / що далі

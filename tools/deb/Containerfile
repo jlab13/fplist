@@ -1,0 +1,11 @@
+# The build environment of the Debian package: Debian 13 (trixie). Built per architecture by
+# build.sh (--platform linux/<arch>).
+FROM docker.io/library/debian:trixie
+
+# Debian 13 has no notcurses: the build makes its own, which needs ncursesw, libunistring
+# and libdeflate
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      build-essential cmake pkg-config git ca-certificates file gettext \
+      libcurl4-openssl-dev libexpat1-dev libncurses-dev libunistring-dev libdeflate-dev \
+ && rm -rf /var/lib/apt/lists/*

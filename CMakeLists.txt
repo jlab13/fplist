@@ -109,4 +109,25 @@ if(FPL_ASAN)
   endforeach()
 endif()
 
-install(TARGETS fpl RUNTIME DESTINATION bin)
+install(TARGETS fpl RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES LICENSE README.md README_UA.md DESTINATION ${CMAKE_INSTALL_DOCDIR})
+
+# --- Debian package fpl (+ fpl-dbgsym), see cmake/DebPackage.cmake ----------
+# Built by tools/deb/build.sh in a Debian 13 container. Debian 13 has no notcurses, so the
+# bundled one is linked statically; the shared libraries come from dpkg-shlibdeps.
+# The paths of the data and the translations are compiled in: the package goes to the prefix
+# the build was configured for (tools/deb/inside.sh configures /usr)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/DebPackage.cmake)
+set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
+set(CPACK_DEBIAN_PACKAGE_SECTION electronics)
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Full Parameter List: ArduPilot and PX4 parameter editor")
+# the extended description only: CPack puts the summary above it and indents every line
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Terminal (TUI) editor of autopilot parameters over MAVLink, with the columns of
+Mission Planner's Full Parameter List. Finds the vehicle on USB, UDP or TCP like
+QGroundControl, downloads the parameters (MAVFTP for ArduPilot), shows their metadata
+and translations and writes the changes back.")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/jlab13/fplist")
+# the metadata is downloaded over HTTPS
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "ca-certificates")
+include(CPack)
