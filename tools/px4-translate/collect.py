@@ -22,9 +22,10 @@ IDENT = re.compile(r"\b[A-Za-z0-9]*_[A-Za-z0-9_]*[A-Za-z0-9]\b")
 PLACEHOLDER = re.compile(r"\{\d+(?::[^}]*)?\}")
 TAG = re.compile(r"</?[a-zA-Z][^>]*>")
 CODE = re.compile(r"```.*?```|`[^`\n]+`", re.S)
-URL = re.compile(r"https?://\S+")
+URL = re.compile(r"https?://[^\s,;)\]]*[^\s,;.)\]]")  # without trailing punctuation
 NUMBER = re.compile(r"(?<![\w.])\d+(?:\.\d+)?(?![\w])")
 LATIN_WORDS = re.compile(r"[A-Za-z]{4,}")
+ENGLISH_WORDS = re.compile(r"\b(the|to|of|and|is|for|when|with|be|if|this|will|that|are)\b", re.I)
 
 
 def check(src, tr):
@@ -42,8 +43,9 @@ def check(src, tr):
     for num in set(NUMBER.findall(src)):
         if "." in num and num.replace(".", ",") in tr and num not in tr:
             errs.append(f"decimal comma: {num}")
-    # untranslated: long English sentence copied verbatim
-    if len(src) > 25 and tr.strip() == src.strip() and len(LATIN_WORDS.findall(src)) > 3:
+    # untranslated: an English sentence copied verbatim (product/model name
+    # lists like "Pixhawk/Pixracer" legitimately stay as they are)
+    if tr.strip() == src.strip() and len(LATIN_WORDS.findall(src)) > 3 and ENGLISH_WORDS.search(src):
         errs.append("not translated")
     if re.search(r"[ыэъё]", tr, re.I):
         errs.append("Russian letters")

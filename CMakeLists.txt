@@ -61,6 +61,7 @@ add_executable(gndtui
   src/ui.c
   src/ui_table.c
   src/ui_edit.c
+  src/ui_groups.c
   src/i18n.c
 )
 target_compile_definitions(gndtui PRIVATE GNDTUI_VERSION="${PROJECT_VERSION}" _GNU_SOURCE)
@@ -74,17 +75,19 @@ target_link_libraries(gndtui PRIVATE mavlink cjson gndtui_notcurses
 # Copied to <build>/data so the binary finds it when run from the build tree.
 include(GNUInstallDirs)
 target_compile_definitions(gndtui PRIVATE GNDTUI_DATADIR="${CMAKE_INSTALL_FULL_DATADIR}/gndtui")
-file(GLOB GNDTUI_PX4_TS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/translations/px4/*.ts)
 set(_data_out)
-foreach(f IN LISTS GNDTUI_PX4_TS)
-  get_filename_component(_n ${f} NAME)
-  add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/data/px4/${_n}
-    COMMAND ${CMAKE_COMMAND} -E copy ${f} ${CMAKE_BINARY_DIR}/data/px4/${_n}
-    DEPENDS ${f})
-  list(APPEND _data_out ${CMAKE_BINARY_DIR}/data/px4/${_n})
+foreach(fw px4 ardupilot)
+  file(GLOB _ts CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/translations/${fw}/*.ts)
+  foreach(f IN LISTS _ts)
+    get_filename_component(_n ${f} NAME)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/data/${fw}/${_n}
+      COMMAND ${CMAKE_COMMAND} -E copy ${f} ${CMAKE_BINARY_DIR}/data/${fw}/${_n}
+      DEPENDS ${f})
+    list(APPEND _data_out ${CMAKE_BINARY_DIR}/data/${fw}/${_n})
+  endforeach()
+  install(FILES ${_ts} DESTINATION ${CMAKE_INSTALL_DATADIR}/gndtui/${fw})
 endforeach()
 add_custom_target(gndtui_data ALL DEPENDS ${_data_out})
-install(FILES ${GNDTUI_PX4_TS} DESTINATION ${CMAKE_INSTALL_DATADIR}/gndtui/px4)
 
 # --- translations -------------------------------------------------------------
 include(cmake/I18n.cmake)

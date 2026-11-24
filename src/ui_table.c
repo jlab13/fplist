@@ -81,6 +81,8 @@ void ui_view_rebuild(app_t *a) {
 			continue;
 		if (u->modified_only && !p->pending && p->wstate != PW_FAILED)
 			continue;
+		if (u->group_name[0] && (!p->category || strcmp(p->category, u->group_cat) != 0 || strcmp(p->group, u->group_name) != 0))
+			continue;
 		if (!matches(p, u->search.buf))
 			continue;
 		u->view[u->nview++] = i;
@@ -509,6 +511,8 @@ void ui_draw_table(app_t *a) {
 			t = a->veh.pdl == PDL_FAILED ? _("No parameters received.") : _("Downloading parameters...");
 		else if (u->modified_only)
 			t = _("No modified parameters (m: show all).");
+		else if (u->group_name[0] && !u->search.len)
+			t = _("No parameters in this group (Esc: all groups).");
 		else {
 			snprintf(buf, sizeof buf, _("No parameters match \"%s\" (Esc clears the search)."), u->search.buf);
 			t = buf;

@@ -98,24 +98,26 @@ static meta_db_t *try_load(const char *path, char *err, size_t errlen) {
 	return NULL;
 }
 
-/* PX4 translations: first the reviewed community translations (Crowdin,
- * downloaded), then gndtui's bundled machine translations, which only fill
- * the gaps. Missing files for a language = silently none. */
+/* Translations: for PX4 first the reviewed community translations (Crowdin,
+ * downloaded), then gndtui's bundled machine translations (PX4 and
+ * ArduPilot), which only fill the gaps. Missing files = silently none. */
 static void load_translation(metafetch_t *mf, const char *cache) {
 	const metafetch_req_t *r = &mf->req;
 	meta_db_t *db			 = mf->result;
 	char err[512]			 = "";
 
-	source_t s = {0};
-	snprintf(s.url, sizeof s.url, PX4_TR_URL, r->lang);
-	snprintf(s.file, sizeof s.file, "%s/px4-parameters_%s.ts", cache, r->lang);
-	const char *how;
-	if (ensure_file(&s, r->offline, &how, err, sizeof err) && !meta_load_qt_ts(db, s.file, r->lang, false, err, sizeof err))
-		LOG("metadata: translation %s: %s", s.file, err);
+	if (!r->ardupilot) {
+		source_t s = {0};
+		snprintf(s.url, sizeof s.url, PX4_TR_URL, r->lang);
+		snprintf(s.file, sizeof s.file, "%s/px4-parameters_%s.ts", cache, r->lang);
+		const char *how;
+		if (ensure_file(&s, r->offline, &how, err, sizeof err) && !meta_load_qt_ts(db, s.file, r->lang, false, err, sizeof err))
+			LOG("metadata: translation %s: %s", s.file, err);
+	}
 	int community = db->tr_strings;
 
 	char rel[64], mt[1024];
-	snprintf(rel, sizeof rel, "px4/parameters_%s.mt.ts", r->lang);
+	snprintf(rel, sizeof rel, "%s/parameters_%s.mt.ts", r->ardupilot ? "ardupilot" : "px4", r->lang);
 	if (find_data_file(rel, mt, sizeof mt) && !meta_load_qt_ts(db, mt, r->lang, true, err, sizeof err))
 		LOG("metadata: machine translation %s: %s", mt, err);
 
@@ -188,7 +190,7 @@ static void *worker(void *arg) {
 	if (!mf->result)
 		snprintf(mf->msg, sizeof mf->msg, _("metadata unavailable: %s"),
 				err[0] ? err : (r->offline ? _("offline and nothing cached") : _("unknown error")));
-	else if (!r->ardupilot && r->lang[0])
+	else if (r->lang[0])
 		load_translation(mf, cache);
 	atomic_store(&mf->done, 1);
 	return NULL;

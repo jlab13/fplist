@@ -29,7 +29,8 @@ typedef struct param_meta {
 	char *human; /* short name / short description */
 	char *desc;	 /* full description */
 	char *units;
-	char *user; /* "Standard" / "Advanced" (ArduPilot) or category (PX4) */
+	char *user;	 /* "Standard" / "Advanced" (ArduPilot) or category (PX4) */
+	char *group; /* PX4 parameter group ("Multicopter Position Control"), NULL for ArduPilot */
 	bool has_range;
 	double min, max;
 	bool has_increment;
@@ -46,8 +47,9 @@ typedef struct param_meta {
 	char *options; /* Mission-Planner-style "Options" column text */
 
 	char *src_long; /* PX4 longDesc as published (to match translations) */
-	char *human_tr, *long_tr, *desc_tr, *options_tr, *user_tr;
-	bool human_mt, long_mt; /* machine translations (unreviewed) */
+	char *human_tr, *long_tr, *desc_tr, *options_tr, *user_tr, *group_tr;
+	bool human_mt, long_mt, desc_mt; /* machine translations (unreviewed) */
+	bool desc_composed;				 /* PX4: desc = shortDesc + longDesc */
 } param_meta_t;
 
 typedef struct meta_db {
@@ -88,7 +90,8 @@ const char *meta_desc(const param_meta_t *m); /* falls back to the short name */
 const char *meta_options(const param_meta_t *m);
 const char *meta_vlabel(const meta_value_t *v);
 const char *meta_blabel(const meta_bit_t *b);
-const char *meta_user_tr(const param_meta_t *m); /* NULL: use gettext */
+const char *meta_user_tr(const param_meta_t *m);  /* NULL: use gettext */
+const char *meta_group_tr(const param_meta_t *m); /* NULL: show the English group */
 /* A translated description is being shown (so the original is worth showing too). */
 bool meta_desc_translated(const param_meta_t *m);
 /* The shown description / labels contain machine translation. */

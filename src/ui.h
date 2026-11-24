@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 struct app;
@@ -17,6 +18,7 @@ typedef enum {
 	MODE_PROMPT,  /* file name entry */
 	MODE_CONFIRM, /* y/n question */
 	MODE_HELP,
+	MODE_GROUPS, /* parameter group chooser */
 } ui_mode_t;
 
 typedef enum { PROMPT_SAVE, PROMPT_LOAD } prompt_kind_t;
@@ -27,6 +29,16 @@ typedef struct lineedit {
 	int len; /* bytes */
 	int cur; /* byte offset */
 } lineedit_t;
+
+/* One row of the group chooser: "all parameters", a category heading or a group. */
+typedef struct ui_group_entry {
+	enum { GE_ALL, GE_CATEGORY, GE_GROUP } kind;
+	const char *category;	 /* English category name */
+	const char *category_tr; /* translated by the metadata, or NULL */
+	char group[48];			 /* English group name */
+	const char *group_tr;	 /* translated by the metadata, or NULL */
+	int count;
+} ui_group_entry_t;
 
 #define UI_MAX_ROWS 512
 
@@ -49,6 +61,17 @@ typedef struct ui {
 	bool details;
 	bool modified_only;
 	lineedit_t search;
+	/* active group filter (QGC style category + group); empty = all */
+	char group_cat[48];
+	char group_name[48];
+	/* group chooser dialog */
+	ui_group_entry_t *gent;
+	int ngent, capgent;
+	int *gvis; /* indices of entries matching the dialog filter */
+	int ngvis;
+	int gsel, gtop;		/* index into gvis */
+	lineedit_t gsearch; /* type-to-filter text */
+	int gpop_y0, gpop_x0, gpop_h, gpop_w, gpop_first;
 
 	ui_mode_t mode;
 
@@ -100,6 +123,16 @@ void ui_pick_key(struct app *a, uint32_t key);
 void ui_bits_key(struct app *a, uint32_t key);
 void ui_draw_popup(struct app *a);
 void ui_popup_click(struct app *a, int y, int x, bool dbl);
+
+/* ui_groups.c */
+void ui_groups_open(struct app *a);
+void ui_groups_key(struct app *a, uint32_t key);
+void ui_groups_draw(struct app *a, int *cursor_y, int *cursor_x);
+void ui_groups_click(struct app *a, int y, int x);
+void ui_groups_scroll(struct app *a, int delta);
+void ui_groups_clear_filter(struct app *a);
+/* "Category › Group" of the active filter (translated), "" when none */
+void ui_groups_label(struct app *a, char *out, size_t n);
 
 /* drawing helpers shared by ui*.c */
 void ui_fill(struct ncplane *n, int y, int x, int w);

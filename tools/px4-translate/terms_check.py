@@ -8,7 +8,7 @@ RULES = [
     ("calibrated airspeed is not 'приладова'", r"calibrated airspeed", r"приладов"),
     ("throttle -> тяга, not дросель", r"throttle", r"дросел"),
     ("timeout -> тайм-аут", None, r"(?<![\w-])таймаут"),
-    ("landing -> приземлення, not посадка", r"\bland(ing|ed|s)?\b", r"посадк"),
+    ("landing -> приземлення, not посадка", r"\bland(ing|ed|s)?\b", r"(?<!на )посадк(?!ов\w* смуг)"),
     ("arming -> взведення", r"\barm(ing|ed)?\b", r"охорон|активац"),
     ("failsafe -> аварійний режим", r"failsafe", r"режим\w* безпеки|відмовостійк"),
     ("range finder -> вимірювач дальності", r"range ?finder|range sensor|distance sensor", r"далекомір|дальномір|датчик\w* відстані"),
@@ -17,6 +17,9 @@ RULES = [
     ("tiltrotor -> конвертоплан", r"tilt-?rotor", r"Tiltrotor|поворотн\w+ гвинт"),
     ("tailsitter -> тейлсітер", r"tail-?sitter", r"Tailsitter|тейлситер|[Тт]ейлсіттер"),
     ("quad-chute stays Latin", r"quad-?chute", r"квадчут"),
+    ("Blimp stays Latin", r"\bblimp\b", r"[Бб]лімп"),
+    ("EPM gripper is not ЕМІ", r"\b(emp|epm)\b", r"ЕМІ"),
+    ("thrust with throttle -> сила тяги", r"thrust", r"тяг\w* при \w+ тяз\w* газу|тязі газу"),
 ]
 
 def main(outdir):

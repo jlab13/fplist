@@ -224,6 +224,7 @@ static void poll_meta(app_t *a) {
 		a->meta = db;
 		snprintf(a->meta_status, sizeof a->meta_status, "%s", db->source);
 		ps_attach_meta(&a->ps, a->meta);
+		ps_assign_groups(&a->ps, a->veh.fw != VFW_PX4);
 		a->attached_gen = a->ps.generation;
 		app_msg(a, MSG_INFO, "%s", msg);
 	} else {
@@ -345,6 +346,7 @@ int app_run(app_t *a) {
 			poll_meta(a);
 			if (a->ps.generation != a->attached_gen) {
 				ps_attach_meta(&a->ps, a->meta);
+				ps_assign_groups(&a->ps, a->veh.fw != VFW_PX4);
 				favs_apply(&a->favs, &a->ps);
 				a->attached_gen = a->ps.generation;
 			}

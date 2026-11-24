@@ -31,6 +31,11 @@ typedef struct param {
 
 	bool fav;
 	const param_meta_t *meta; /* may be NULL */
+
+	/* QGC-style grouping (ps_assign_groups): category is a static or
+	 * metadata-owned string, group is copied (PX4 names or name prefix). */
+	const char *category;
+	char group[48];
 } param_t;
 
 typedef struct paramset {
@@ -63,6 +68,17 @@ int ps_upsert(paramset_t *ps, const char *name, bool *created);
 
 int ps_pending_count(const paramset_t *ps);
 void ps_attach_meta(paramset_t *ps, const meta_db_t *db);
+
+#define PARAM_GROUP_MISC "Misc"
+#define PARAM_CATEGORY_OTHER "Other"
+/* Category / group like QGroundControl:
+ *  PX4:       category and group from the metadata ("Standard" / "Misc"
+ *             when missing)
+ *  ArduPilot: category from the metadata "User" field ("Advanced" without
+ *             metadata, "Other" when empty); group = name up to the first
+ *             '_' without trailing digits (SERIAL1_BAUD -> SERIAL); groups
+ *             with a single parameter go to "Misc". */
+void ps_assign_groups(paramset_t *ps, bool ardupilot);
 
 /* MAV_PARAM_TYPE helpers */
 bool param_type_is_int(uint8_t type);

@@ -291,11 +291,9 @@ static void list_nav(app_t *a, uint32_t k) {
 	int page = popup_visible(a);
 	switch (k) {
 	case NCKEY_UP:
-	case 'k':
 		u->pick_sel--;
 		break;
 	case NCKEY_DOWN:
-	case 'j':
 		u->pick_sel++;
 		break;
 	case NCKEY_PGUP:
@@ -305,11 +303,9 @@ static void list_nav(app_t *a, uint32_t k) {
 		u->pick_sel += page;
 		break;
 	case NCKEY_HOME:
-	case 'g':
 		u->pick_sel = 0;
 		break;
 	case NCKEY_END:
-	case 'G':
 		u->pick_sel = n - 1;
 		break;
 	default:

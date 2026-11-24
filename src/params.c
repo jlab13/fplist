@@ -267,3 +267,50 @@ float param_encode(param_enc_t enc, uint8_t type, double v) {
 	}
 	return u.f;
 }
+
+static void name_group(const char *name, char *out, size_t n) {
+	size_t len = strcspn(name, "_");
+	if (len >= n)
+		len = n - 1;
+	memcpy(out, name, len);
+	out[len] = '\0';
+	while (len > 0 && out[len - 1] >= '0' && out[len - 1] <= '9')
+		out[--len] = '\0';
+	if (!len)
+		xstrlcpy(out, name, n);
+}
+
+static int cmp_group(const void *a, const void *b, void *ctx) {
+	const paramset_t *ps = ctx;
+	return strcmp(ps->v[*(const int *)a].group, ps->v[*(const int *)b].group);
+}
+
+void ps_assign_groups(paramset_t *ps, bool ardupilot) {
+	for (int i = 0; i < ps->n; i++) {
+		param_t *p			  = &ps->v[i];
+		const param_meta_t *m = p->meta;
+		if (ardupilot) {
+			name_group(p->name, p->group, sizeof p->group);
+			p->category = !m ? "Advanced" : (m->user && *m->user ? m->user : PARAM_CATEGORY_OTHER);
+		} else {
+			xstrlcpy(p->group, m && m->group && *m->group ? m->group : PARAM_GROUP_MISC, sizeof p->group);
+			p->category = m && m->user && *m->user ? m->user : "Standard";
+		}
+	}
+	if (!ardupilot || ps->n == 0)
+		return;
+	/* demote single-member groups to Misc */
+	int *idx = xmalloc((size_t)ps->n * sizeof *idx);
+	for (int i = 0; i < ps->n; i++)
+		idx[i] = i;
+	qsort_r(idx, (size_t)ps->n, sizeof *idx, cmp_group, ps);
+	for (int i = 0; i < ps->n;) {
+		int j = i + 1;
+		while (j < ps->n && strcmp(ps->v[idx[j]].group, ps->v[idx[i]].group) == 0)
+			j++;
+		if (j - i == 1)
+			xstrlcpy(ps->v[idx[i]].group, PARAM_GROUP_MISC, sizeof ps->v[idx[i]].group);
+		i = j;
+	}
+	free(idx);
+}

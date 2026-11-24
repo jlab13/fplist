@@ -10,3 +10,4 @@
 - actuator → виконавчий пристрій; servo → сервопривід; rotor → ротор; main rotor → несний гвинт
 - tiltrotor → конвертоплан; tailsitter → тейлсітер; quad-chute → quad-chute (PX4 feature name, Latin)
 - calibrated airspeed → калібрована повітряна швидкість (NOT "приладова", that is indicated airspeed)
+- (landing) approach → захід на посадку (established aviation term; exception to landing → приземлення); never the Russianism "заход"

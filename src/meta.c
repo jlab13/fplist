@@ -50,6 +50,8 @@ static void meta_free_one(param_meta_t *m) {
 	free(m->desc);
 	free(m->units);
 	free(m->user);
+	free(m->group);
+	free(m->group_tr);
 	free(m->options);
 	free(m->src_long);
 	free(m->human_tr);
@@ -484,14 +486,16 @@ bool meta_load_px4_json(meta_db_t *db, const char *path, char *err, size_t errle
 		m->decimals		= -1;
 		m->name			= xstrdup(name);
 		const char *sd = jstr(it, "shortDesc"), *ld = jstr(it, "longDesc");
-		m->human = xstrdup(sd);
-		m->desc	 = compose_desc(sd, ld);
+		m->human		 = xstrdup(sd);
+		m->desc			 = compose_desc(sd, ld);
+		m->desc_composed = true;
 		if (ld && *ld) {
 			m->src_long = xstrdup(ld);
 			str_squash_ws(m->src_long);
 		}
 		m->units = xstrdup(jstr(it, "units"));
 		m->user	 = xstrdup(jstr(it, "category"));
+		m->group = xstrdup(jstr(it, "group"));
 		double lo, hi, v;
 		bool hl = jnum(it, "min", &lo), hh = jnum(it, "max", &hi);
 		if (hl || hh) {
@@ -582,7 +586,7 @@ const char *meta_desc(const param_meta_t *m) {
 bool meta_desc_translated(const param_meta_t *m) { return m && g_translate && m->desc_tr; }
 
 bool meta_desc_machine(const param_meta_t *m) {
-	return meta_desc_translated(m) && ((m->human_tr && m->human_mt) || (m->long_tr && m->long_mt));
+	return meta_desc_translated(m) && (m->desc_composed ? (m->human_tr && m->human_mt) || (m->long_tr && m->long_mt) : m->desc_mt);
 }
 
 bool meta_labels_machine(const param_meta_t *m) {
@@ -606,6 +610,7 @@ const char *meta_options(const param_meta_t *m) {
 const char *meta_vlabel(const meta_value_t *v) { return g_translate && v->label_tr ? v->label_tr : v->label; }
 const char *meta_blabel(const meta_bit_t *b) { return g_translate && b->label_tr ? b->label_tr : b->label; }
 const char *meta_user_tr(const param_meta_t *m) { return m && g_translate ? m->user_tr : NULL; }
+const char *meta_group_tr(const param_meta_t *m) { return m && g_translate ? m->group_tr : NULL; }
 
 /* Qt Linguist .ts: <context><name>PATH</name><message><source>EN</source>
  * <translation [type="unfinished"]>TR</translation></message></context>
@@ -622,6 +627,12 @@ typedef struct ts_parser {
 	size_t nlen, slen, tlen;
 	char **cur;
 	size_t *curlen;
+	/* "$text/<kind>" contexts: translations keyed by the English text */
+	struct tx_entry {
+		char kind; /* 'h' title, 'd' description, 'l' label */
+		char *en, *tr;
+	} *tx;
+	int ntx, captx;
 } ts_parser_t;
 
 static void ts_append(char **buf, size_t *len, const char *s, int n) {
@@ -705,6 +716,31 @@ static void ts_apply(ts_parser_t *p) {
 	char path[512];
 	xstrlcpy(path, str_trim(p->name), sizeof path);
 
+	if (strncmp(path, "$text/", 6) == 0) {
+		char kind = path[6] == 'h' ? 'h' : path[6] == 'd' ? 'd' : path[6] == 'l' ? 'l' : 0;
+		if (!kind)
+			return;
+		if (p->ntx == p->captx) {
+			p->captx = p->captx ? p->captx * 2 : 4096;
+			p->tx	 = xrealloc(p->tx, (size_t)p->captx * sizeof *p->tx);
+		}
+		struct tx_entry *e = &p->tx[p->ntx++];
+		e->kind			   = kind;
+		e->en			   = xstrdup(p->source);
+		str_squash_ws(e->en);
+		e->tr = xstrdup(t);
+		str_squash_ws(e->tr);
+		return;
+	}
+	if (strncmp(path, "$globals/group/", 15) == 0) {
+		const char *grp = path + 15;
+		for (int i = 0; i < db->n; i++)
+			if (db->v[i]->group && strcmp(db->v[i]->group, grp) == 0 && (!p->machine || !db->v[i]->group_tr)) {
+				free(db->v[i]->group_tr);
+				db->v[i]->group_tr = xstrdup(t);
+			}
+		return;
+	}
 	if (strncmp(path, "$globals/category/", 18) == 0) {
 		const char *cat = path + 18;
 		for (int i = 0; i < db->n; i++)
@@ -755,6 +791,51 @@ static void XMLCALL ts_end(void *ud, const XML_Char *el) {
 		ts_apply(p);
 }
 
+static int tx_cmp(const void *a, const void *b) {
+	const struct tx_entry *x = a, *y = b;
+	if (x->kind != y->kind)
+		return x->kind - y->kind;
+	return strcmp(x->en, y->en);
+}
+
+/* Look up the translation of an English string (whitespace-normalised). */
+static const char *tx_find(const ts_parser_t *p, char kind, const char *en) {
+	if (!en || !*en)
+		return NULL;
+	char buf[8192];
+	xstrlcpy(buf, en, sizeof buf);
+	str_squash_ws(buf);
+	struct tx_entry key		 = {.kind = kind, .en = buf};
+	const struct tx_entry *e = bsearch(&key, p->tx, (size_t)p->ntx, sizeof *p->tx, tx_cmp);
+	return e ? e->tr : NULL;
+}
+
+static void tx_set(ts_parser_t *p, char **dst, bool *mt, const char *tr) {
+	if (!tr || (p->machine && *dst))
+		return; /* a reviewed translation wins */
+	free(*dst);
+	*dst = xstrdup(tr);
+	*mt	 = p->machine;
+	p->db->tr_strings++;
+	p->db->tr_mt_strings += p->machine;
+}
+
+/* Apply text-keyed translations to every parameter using that English text. */
+static void apply_text_entries(ts_parser_t *p) {
+	qsort(p->tx, (size_t)p->ntx, sizeof *p->tx, tx_cmp);
+	meta_db_t *db = p->db;
+	for (int i = 0; i < db->n; i++) {
+		param_meta_t *m = db->v[i];
+		tx_set(p, &m->human_tr, &m->human_mt, tx_find(p, 'h', m->human));
+		if (!m->desc_composed)
+			tx_set(p, &m->desc_tr, &m->desc_mt, tx_find(p, 'd', m->desc));
+		for (int k = 0; k < m->nvalues; k++)
+			tx_set(p, &m->values[k].label_tr, &m->values[k].label_mt, tx_find(p, 'l', m->values[k].label));
+		for (int k = 0; k < m->nbits; k++)
+			tx_set(p, &m->bits[k].label_tr, &m->bits[k].label_mt, tx_find(p, 'l', m->bits[k].label));
+	}
+}
+
 bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, bool machine, char *err, size_t errlen) {
 	FILE *f = fopen(path, "rb");
 	if (!f) {
@@ -782,13 +863,18 @@ bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, bool mac
 	XML_ParserFree(xp);
 	free(p.name), free(p.source), free(p.tr);
 	fclose(f);
+	if (ok && p.ntx)
+		apply_text_entries(&p);
+	for (int i = 0; i < p.ntx; i++)
+		free(p.tx[i].en), free(p.tx[i].tr);
+	free(p.tx);
 	if (!ok)
 		return false;
 
 	/* derive the composite strings */
 	for (int i = 0; i < db->n; i++) {
 		param_meta_t *m = db->v[i];
-		if (m->human_tr || m->long_tr) {
+		if (m->desc_composed && (m->human_tr || m->long_tr)) {
 			free(m->desc_tr);
 			m->desc_tr = compose_desc(m->human_tr ? m->human_tr : m->human, m->long_tr ? m->long_tr : m->src_long);
 		}

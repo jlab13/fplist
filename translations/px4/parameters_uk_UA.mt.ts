@@ -20839,7 +20839,7 @@ Validity of configured takeoffs/landings is checked independently of the setting
     <name>/parameters/MIS_TKO_LAND_REQ/values/5/description</name>
     <message>
       <source>Same as previous when landed, in-air require landing only if no valid VTOL approach is present</source>
-      <translation>Як попередній варіант, коли апарат на землі; у повітрі вимагати приземлення, лише якщо немає дійсного заходу на приземлення VTOL</translation>
+      <translation>Як попередній варіант, коли апарат на землі; у повітрі вимагати приземлення, лише якщо немає дійсного заходу на посадку VTOL</translation>
       <extracomment>machine-translated: claude-sonnet</extracomment>
     </message>
   </context>
@@ -30615,7 +30615,7 @@ This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</source>
     <name>/parameters/RTL_APPR_FORCE/shortDesc</name>
     <message>
       <source>RTL force approach landing</source>
-      <translation>Примусовий заход на приземлення в RTL</translation>
+      <translation>Примусовий захід на посадку в RTL</translation>
       <extracomment>machine-translated: claude-sonnet</extracomment>
     </message>
   </context>
@@ -30623,7 +30623,7 @@ This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</source>
     <name>/parameters/RTL_APPR_FORCE/longDesc</name>
     <message>
       <source>Only consider RTL point, if it has an approach defined.</source>
-      <translation>Враховувати точку RTL, лише якщо для неї визначено заход на посадку.</translation>
+      <translation>Враховувати точку RTL, лише якщо для неї визначено захід на посадку.</translation>
       <extracomment>machine-translated: claude-sonnet</extracomment>
     </message>
   </context>

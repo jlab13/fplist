@@ -113,6 +113,8 @@ void ui_shutdown(app_t *a) {
 		notcurses_stop(u->nc);
 	u->nc = NULL;
 	free(u->view);
+	free(u->gent);
+	free(u->gvis);
 	u->view = NULL;
 }
 
@@ -236,9 +238,15 @@ static void draw_status(app_t *a, int *cursor_y, int *cursor_x) {
 	ui_rgb_fg(n, C_HDR_FG);
 	ui_fill(n, y, 0, W);
 
-	char right[64] = "";
-	if (a->phase == PHASE_VEHICLE)
-		snprintf(right, sizeof right, " %d/%d ", u->nview, a->ps.n);
+	char right[160] = "";
+	if (a->phase == PHASE_VEHICLE) {
+		char grp[120];
+		ui_groups_label(a, grp, sizeof grp);
+		if (grp[0])
+			snprintf(right, sizeof right, " %s │ %d/%d ", grp, u->nview, a->ps.n);
+		else
+			snprintf(right, sizeof right, " %d/%d ", u->nview, a->ps.n);
+	}
 	int rw	  = utf8_width(right);
 	int avail = W - rw;
 
@@ -329,7 +337,7 @@ static void draw_status(app_t *a, int *cursor_y, int *cursor_x) {
 			/* TRANSLATORS: key names (Enter, /, w, r, ...) must stay as they are */
 			ui_put(n, y, 0, avail,
 					_(" ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  "
-					  "s save  l load  v wrap  d details  t lang  ? help  q quit"));
+					  "g groups  s save  l load  v wrap  d details  t lang  ? help  q quit"));
 		}
 		break;
 	}
@@ -417,28 +425,29 @@ static void draw_help(app_t *a) {
 		const char *text;
 		bool tkey; /* key label is a word that needs translating */
 	} lines[] = {
-			{NULL,			  N_("Navigation"),									  false},
-			{"↑ ↓  j k",	  N_("move"),										  false},
-			{"PgUp PgDn",	  N_("page"),										  false},
-			{"Home End  g G", N_("first / last"),								  false},
-			{N_("mouse"),	  N_("click, wheel, double click to edit"),			  true },
-			{NULL,			  N_("Editing"),									  false},
-			{"Enter  e",	  N_("edit value (list / bitmask editor if known)"),  false},
-			{"z  Z",		  N_("undo edit of this / all parameters"),			  false},
-			{"w",			  N_("write modified parameters to the vehicle"),	  false},
-			{"r",			  N_("refresh (re-download) all parameters"),		  false},
-			{NULL,			  N_("View"),										  false},
-			{"/",			  N_("search name & description, Esc clears"),		  false},
-			{"m",			  N_("show only modified parameters"),				  false},
-			{"f  Space",	  N_("toggle favourite (favourites sort first)"),	  false},
-			{"v",			  N_("wrap rows (Mission Planner style)"),			  false},
-			{"d",			  N_("toggle the details pane"),					  false},
-			{"t",			  N_("descriptions: translation / original English"), false},
-			{NULL,			  N_("Files"),										  false},
-			{"s",			  N_("save parameters (Mission Planner .param)"),	  false},
-			{"l",			  N_("load parameters from file (become edits)"),	  false},
-			{"",			  "",												  false},
-			{"q  Ctrl-C",	  N_("quit"),										  false},
+			{NULL,		  N_("Navigation"),												 false},
+			{"↑ ↓",		  N_("move"),													 false},
+			{"PgUp PgDn", N_("page"),													 false},
+			{"Home End",  N_("first / last"),											 false},
+			{N_("mouse"), N_("click, wheel, double click to edit"),						 true },
+			{NULL,		  N_("Editing"),												 false},
+			{"Enter  e",  N_("edit value (list / bitmask editor if known)"),			 false},
+			{"z  Z",	  N_("undo edit of this / all parameters"),						 false},
+			{"w",		  N_("write modified parameters to the vehicle"),				 false},
+			{"r",		  N_("refresh (re-download) all parameters"),					 false},
+			{NULL,		  N_("View"),													 false},
+			{"/",		  N_("search name & description, Esc clears"),					 false},
+			{"g",		  N_("parameter groups (as in QGroundControl), type to filter"), false},
+			{"m",		  N_("show only modified parameters"),							 false},
+			{"f  Space",  N_("toggle favourite (favourites sort first)"),				 false},
+			{"v",		  N_("wrap rows (Mission Planner style)"),						 false},
+			{"d",		  N_("toggle the details pane"),								 false},
+			{"t",		  N_("descriptions: translation / original English"),			 false},
+			{NULL,		  N_("Files"),													 false},
+			{"s",		  N_("save parameters (Mission Planner .param)"),				 false},
+			{"l",		  N_("load parameters from file (become edits)"),				 false},
+			{"",		  "",															 false},
+			{"q  Ctrl-C", N_("quit"),													 false},
 	};
 	enum { KEYW = 16 };
 	ui_t *u = &a->ui;
@@ -499,6 +508,8 @@ static void render(app_t *a) {
 	draw_status(a, &cy, &cx);
 	if (u->mode == MODE_PICK || u->mode == MODE_BITS)
 		ui_draw_popup(a);
+	else if (u->mode == MODE_GROUPS)
+		ui_groups_draw(a, &cy, &cx);
 	else if (u->mode == MODE_HELP)
 		draw_help(a);
 	if (cy >= 0)
@@ -612,6 +623,10 @@ static void handle_mouse(app_t *a, const ncinput *ni) {
 			ui_pick_key(a, d < 0 ? NCKEY_UP : NCKEY_DOWN);
 			return;
 		}
+		if (u->mode == MODE_GROUPS) {
+			ui_groups_scroll(a, d < 0 ? -1 : 1);
+			return;
+		}
 		if (u->mode == MODE_NORMAL)
 			move_sel(a, d);
 		return;
@@ -623,6 +638,10 @@ static void handle_mouse(app_t *a, const ncinput *ni) {
 		bool dbl	  = now - u->last_click < 0.4;
 		u->last_click = now;
 		ui_popup_click(a, ni->y, ni->x, dbl);
+		return;
+	}
+	if (u->mode == MODE_GROUPS) {
+		ui_groups_click(a, ni->y, ni->x);
 		return;
 	}
 	if (u->mode != MODE_NORMAL)
@@ -655,11 +674,9 @@ static void normal_key(app_t *a, uint32_t k) {
 	int sel_param = ui_selected_param(a);
 	switch (k) {
 	case NCKEY_UP:
-	case 'k':
 		move_sel(a, -1);
 		break;
 	case NCKEY_DOWN:
-	case 'j':
 		move_sel(a, 1);
 		break;
 	case NCKEY_PGUP:
@@ -669,11 +686,12 @@ static void normal_key(app_t *a, uint32_t k) {
 		move_sel(a, page_rows(a));
 		break;
 	case NCKEY_HOME:
-	case 'g':
 		move_sel(a, -u->nview);
 		break;
+	case 'g':
+		ui_groups_open(a);
+		break;
 	case NCKEY_END:
-	case 'G':
 		move_sel(a, u->nview);
 		break;
 	case NCKEY_ENTER:
@@ -695,6 +713,8 @@ static void normal_key(app_t *a, uint32_t k) {
 		} else if (u->modified_only) {
 			u->modified_only = false;
 			u->view_stale	 = true;
+		} else if (u->group_name[0]) {
+			ui_groups_clear_filter(a);
 		}
 		break;
 	case 'f':
@@ -872,6 +892,9 @@ void ui_handle_input(app_t *a) {
 			break;
 		case MODE_CONFIRM:
 			confirm_key(a, k);
+			break;
+		case MODE_GROUPS:
+			ui_groups_key(a, k);
 			break;
 		case MODE_HELP:
 			u->mode = MODE_NORMAL;
