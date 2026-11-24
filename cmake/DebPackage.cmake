@@ -5,29 +5,14 @@
 # Include it after the install rules; it sets what every package shares and DEB_VERSION.
 # The project then names its packages, adds its dependencies and includes CPack itself.
 #
-# Shared, apart from these comments, with the author's other CMake projects.
+# Derived from the author's other CMake projects; unlike them the version is project(VERSION)
+# alone, without the time of the last commit.
 
-# the version: <project version>+<UTC time of the last commit>, e.g. 2.4.2+20261029102925.
-# apt orders the builds of one release by the commit they come from; the commit hash is in
-# the binaries, not here: a hash would not order
+# the version: project(VERSION) as it is, e.g. 0.1.0, so the package is fpl_0.1.0_amd64.deb.
+# A native package (the packaging lives with the sources): no Debian revision, a new build to
+# install over an old one takes a new version in project()
+set(DEB_VERSION "${PROJECT_VERSION}")
 find_package(Git QUIET)
-set(_deb_stamp "")
-if(GIT_EXECUTABLE)
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E env TZ=UTC
-            ${GIT_EXECUTABLE} log -1 --format=%cd --date=format-local:%Y%m%d%H%M%S
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE _deb_stamp
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-  )
-endif()
-if(_deb_stamp)
-  set(DEB_VERSION "${PROJECT_VERSION}+${_deb_stamp}")
-else()
-  message(WARNING "No git revision: the package version is ${PROJECT_VERSION} alone")
-  set(DEB_VERSION "${PROJECT_VERSION}")
-endif()
 
 # the maintainer: -DDEB_MAINTAINER="Name <mail>" (the container build passes the identity of
 # whoever runs it), otherwise the git identity of the source tree

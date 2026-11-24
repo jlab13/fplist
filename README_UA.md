@@ -45,8 +45,8 @@ sudo apt install ./dist/amd64/fpl_*.deb
   Збірка завантажує MAVLink, cJSON і notcurses, тож потрібна мережа.
 - **Що всередині:** у Debian 13 немає notcurses, тому він вшитий статично. Решта бібліотек (curl,
   expat, ncurses, libunistring, libdeflate) стають залежностями через `dpkg-shlibdeps`.
-- **Версія:** `<версія project()>+<час останнього коміту, UTC>`, наприклад `0.1.0+20261124231300`,
-  щоб apt правильно впорядковував збірки одного релізу.
+- **Версія:** та, що в `project()` у `CMakeLists.txt`, наприклад `fpl_0.1.0_amd64.deb`. Щоб нова збірка
+  ставилася поверх старої, версію треба підняти.
 - **Maintainer:** береться з `git config user.name` / `user.email` того, хто збирає пакет.
 - Спільні налаштування лежать у `cmake/DebPackage.cmake`, контейнер — у `tools/deb/`.
 

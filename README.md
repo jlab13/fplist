@@ -44,8 +44,8 @@ sudo apt install ./dist/amd64/fpl_*.deb
   The build downloads MAVLink, cJSON and notcurses, so it needs the network.
 - **What's inside:** Debian 13 has no notcurses, so it is linked statically. The other libraries
   (curl, expat, ncurses, libunistring, libdeflate) become dependencies through `dpkg-shlibdeps`.
-- **Version:** `<project version>+<UTC time of the last commit>`, e.g. `0.1.0+20261124231300`, so apt
-  orders the builds of one release.
+- **Version:** the one in `project()` of `CMakeLists.txt`, e.g. `fpl_0.1.0_amd64.deb`. To install a new
+  build over an old one, raise it.
 - **Maintainer:** taken from `git config user.name` / `user.email` of whoever builds the package.
 - Common settings are in `cmake/DebPackage.cmake`, and the container is in `tools/deb/`.
 
