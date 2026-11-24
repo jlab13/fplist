@@ -1,0 +1,12 @@
+# Project terminology decisions (in addition to uk_terms.md)
+- swash plate → автомат перекосу
+- range finder / range sensor / distance sensor → вимірювач дальності (as in approved PX4 translations)
+- airframe → планер (vehicle geometry/type); multicopter frame → рама
+- bias (sensor) → зміщення
+- innovation gate / gate size → ворота інновацій / розмір воріт інновацій
+- flare (landing) → вирівнювання перед приземленням
+- failure (hardware/motor/sensor) → відмова; software fault → помилка
+- dead-reckoning → сліпа навігація (as in approved PX4 translations)
+- actuator → виконавчий пристрій; servo → сервопривід; rotor → ротор; main rotor → несний гвинт
+- tiltrotor → конвертоплан; tailsitter → тейлсітер; quad-chute → quad-chute (PX4 feature name, Latin)
+- calibrated airspeed → калібрована повітряна швидкість (NOT "приладова", that is indicated airspeed)

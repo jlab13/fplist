@@ -581,6 +581,22 @@ const char *meta_desc(const param_meta_t *m) {
 
 bool meta_desc_translated(const param_meta_t *m) { return m && g_translate && m->desc_tr; }
 
+bool meta_desc_machine(const param_meta_t *m) {
+	return meta_desc_translated(m) && ((m->human_tr && m->human_mt) || (m->long_tr && m->long_mt));
+}
+
+bool meta_labels_machine(const param_meta_t *m) {
+	if (!m || !g_translate)
+		return false;
+	for (int i = 0; i < m->nvalues; i++)
+		if (m->values[i].label_tr && m->values[i].label_mt)
+			return true;
+	for (int i = 0; i < m->nbits; i++)
+		if (m->bits[i].label_tr && m->bits[i].label_mt)
+			return true;
+	return false;
+}
+
 const char *meta_options(const param_meta_t *m) {
 	if (!m)
 		return NULL;
@@ -599,6 +615,7 @@ const char *meta_user_tr(const param_meta_t *m) { return m && g_translate ? m->u
  *       $globals/category/NAME */
 typedef struct ts_parser {
 	meta_db_t *db;
+	bool machine;
 	enum { TS_NONE, TS_NAME, TS_SOURCE, TS_TR } in;
 	bool unfinished;
 	char *name, *source, *tr;
@@ -662,15 +679,20 @@ static bool same_text(const char *a, const char *b) {
 	return eq;
 }
 
-static void set_tr(meta_db_t *db, char **dst, const char *en, const char *src, const char *tr) {
-	if (!same_text(en, src)) {
+static void set_tr(ts_parser_t *p, char **dst, bool *mt, const char *en, const char *tr) {
+	meta_db_t *db = p->db;
+	if (!same_text(en, p->source)) {
 		db->tr_stale++;
 		return;
 	}
+	if (p->machine && *dst)
+		return; /* a reviewed translation wins */
 	free(*dst);
 	*dst = xstrdup(tr);
 	str_squash_ws(*dst);
+	*mt = p->machine;
 	db->tr_strings++;
+	db->tr_mt_strings += p->machine;
 }
 
 static void ts_apply(ts_parser_t *p) {
@@ -702,9 +724,9 @@ static void ts_apply(ts_parser_t *p) {
 	if (!m)
 		return;
 	if (strcmp(rest, "shortDesc") == 0) {
-		set_tr(db, &m->human_tr, m->human, p->source, t);
+		set_tr(p, &m->human_tr, &m->human_mt, m->human, t);
 	} else if (strcmp(rest, "longDesc") == 0) {
-		set_tr(db, &m->long_tr, m->src_long, p->source, t);
+		set_tr(p, &m->long_tr, &m->long_mt, m->src_long, t);
 	} else {
 		bool values = strncmp(rest, "values/", 7) == 0, bits = strncmp(rest, "bitmask/", 8) == 0;
 		if (!values && !bits)
@@ -717,11 +739,11 @@ static void ts_apply(ts_parser_t *p) {
 		if (values) {
 			for (int i = 0; i < m->nvalues; i++)
 				if (fabs(m->values[i].code - code) < 1e-6)
-					set_tr(db, &m->values[i].label_tr, m->values[i].label, p->source, t);
+					set_tr(p, &m->values[i].label_tr, &m->values[i].label_mt, m->values[i].label, t);
 		} else {
 			for (int i = 0; i < m->nbits; i++)
 				if (m->bits[i].bit == (int)code)
-					set_tr(db, &m->bits[i].label_tr, m->bits[i].label, p->source, t);
+					set_tr(p, &m->bits[i].label_tr, &m->bits[i].label_mt, m->bits[i].label, t);
 		}
 	}
 }
@@ -733,14 +755,14 @@ static void XMLCALL ts_end(void *ud, const XML_Char *el) {
 		ts_apply(p);
 }
 
-bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, char *err, size_t errlen) {
+bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, bool machine, char *err, size_t errlen) {
 	FILE *f = fopen(path, "rb");
 	if (!f) {
 		snprintf(err, errlen, "%s: %s", path, strerror(errno));
 		return false;
 	}
 	XML_Parser xp = XML_ParserCreate(NULL);
-	ts_parser_t p = {.db = db};
+	ts_parser_t p = {.db = db, .machine = machine};
 	XML_SetUserData(xp, &p);
 	XML_SetElementHandler(xp, ts_start, ts_end);
 	XML_SetCharacterDataHandler(xp, ts_chars);

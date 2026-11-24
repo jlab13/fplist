@@ -407,6 +407,8 @@ static void draw_details(app_t *a, int y0) {
 		al = sappendf(attrs, sizeof attrs, al, "%s", _(" · reboot required"));
 	if (m && m->readonly)
 		al = sappendf(attrs, sizeof attrs, al, "%s", _(" · read-only"));
+	if (meta_desc_machine(m) || meta_labels_machine(m))
+		al = sappendf(attrs, sizeof attrs, al, "%s", _(" · machine translation"));
 	if (p->index >= 0)
 		sappendf(attrs, sizeof attrs, al, " · #%d ", p->index);
 	int aw = utf8_width(attrs);

@@ -14,12 +14,14 @@ typedef struct meta_value {
 	double code;
 	char *label;
 	char *label_tr;
+	bool label_mt; /* label_tr is a machine translation */
 } meta_value_t;
 
 typedef struct meta_bit {
 	int bit;
 	char *label;
 	char *label_tr;
+	bool label_mt;
 } meta_bit_t;
 
 typedef struct param_meta {
@@ -45,6 +47,7 @@ typedef struct param_meta {
 
 	char *src_long; /* PX4 longDesc as published (to match translations) */
 	char *human_tr, *long_tr, *desc_tr, *options_tr, *user_tr;
+	bool human_mt, long_mt; /* machine translations (unreviewed) */
 } param_meta_t;
 
 typedef struct meta_db {
@@ -54,9 +57,10 @@ typedef struct meta_db {
 	int hcap;
 	char source[256]; /* description for the UI */
 
-	char tr_lang[16]; /* language of applied translations, "" if none */
-	int tr_strings;	  /* translated strings applied */
-	int tr_stale;	  /* translations skipped: English text changed */
+	char tr_lang[16];  /* language of applied translations, "" if none */
+	int tr_strings;	   /* translated strings applied */
+	int tr_stale;	   /* translations skipped: English text changed */
+	int tr_mt_strings; /* of tr_strings: machine translations */
 } meta_db_t;
 
 meta_db_t *meta_db_new(void);
@@ -72,7 +76,9 @@ bool meta_load_px4_json(meta_db_t *db, const char *path, char *err, size_t errle
 const char *meta_value_label(const param_meta_t *m, double v);
 
 /* PX4 metadata translations (Qt Linguist .ts from PX4-Metadata-Translations). */
-bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, char *err, size_t errlen);
+/* machine: the file holds machine translations; they only fill strings the
+ * reviewed (community) translation does not have, and are flagged. */
+bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, bool machine, char *err, size_t errlen);
 
 /* Display accessors: translated text when available and enabled. */
 void meta_set_translate(bool on);
@@ -85,3 +91,6 @@ const char *meta_blabel(const meta_bit_t *b);
 const char *meta_user_tr(const param_meta_t *m); /* NULL: use gettext */
 /* A translated description is being shown (so the original is worth showing too). */
 bool meta_desc_translated(const param_meta_t *m);
+/* The shown description / labels contain machine translation. */
+bool meta_desc_machine(const param_meta_t *m);
+bool meta_labels_machine(const param_meta_t *m);

@@ -37,6 +37,9 @@ void str_squash_ws(char *s);
 bool path_cache_dir(char *out, size_t n);  /* $XDG_CACHE_HOME/gndtui */
 bool path_config_dir(char *out, size_t n); /* $XDG_CONFIG_HOME/gndtui */
 bool mkdir_p(const char *path);
+/* Find a bundled data file (relative path, e.g. "px4/x.ts"): $GNDTUI_DATADIR,
+ * then <exe dir>/data (build tree), then the install prefix. */
+bool find_data_file(const char *rel, char *out, size_t n);
 /* Expand a leading "~/" using $HOME. */
 void path_expand_home(const char *in, char *out, size_t n);
 

@@ -98,27 +98,38 @@ static meta_db_t *try_load(const char *path, char *err, size_t errlen) {
 	return NULL;
 }
 
-/* PX4 community translations (Crowdin). Missing language = silently none. */
+/* PX4 translations: first the reviewed community translations (Crowdin,
+ * downloaded), then gndtui's bundled machine translations, which only fill
+ * the gaps. Missing files for a language = silently none. */
 static void load_translation(metafetch_t *mf, const char *cache) {
 	const metafetch_req_t *r = &mf->req;
-	source_t s				 = {0};
+	meta_db_t *db			 = mf->result;
+	char err[512]			 = "";
+
+	source_t s = {0};
 	snprintf(s.url, sizeof s.url, PX4_TR_URL, r->lang);
 	snprintf(s.file, sizeof s.file, "%s/px4-parameters_%s.ts", cache, r->lang);
 	const char *how;
-	char err[512] = "";
-	if (!ensure_file(&s, r->offline, &how, err, sizeof err))
-		return;
-	if (!meta_load_qt_ts(mf->result, s.file, r->lang, err, sizeof err)) {
+	if (ensure_file(&s, r->offline, &how, err, sizeof err) && !meta_load_qt_ts(db, s.file, r->lang, false, err, sizeof err))
 		LOG("metadata: translation %s: %s", s.file, err);
-		return;
-	}
-	LOG("metadata: translation %s: %d strings applied, %d stale", r->lang, mf->result->tr_strings, mf->result->tr_stale);
-	if (mf->result->tr_strings == 0) {
-		mf->result->tr_lang[0] = '\0';
+	int community = db->tr_strings;
+
+	char rel[64], mt[1024];
+	snprintf(rel, sizeof rel, "px4/parameters_%s.mt.ts", r->lang);
+	if (find_data_file(rel, mt, sizeof mt) && !meta_load_qt_ts(db, mt, r->lang, true, err, sizeof err))
+		LOG("metadata: machine translation %s: %s", mt, err);
+
+	LOG("metadata: translation %s: %d community + %d machine strings, %d stale", r->lang, community, db->tr_mt_strings, db->tr_stale);
+	if (db->tr_strings == 0) {
+		db->tr_lang[0] = '\0';
 		return;
 	}
 	size_t l = strlen(mf->msg);
-	snprintf(mf->msg + l, sizeof mf->msg - l, _("; translation %s: %d strings"), r->lang, mf->result->tr_strings);
+	if (db->tr_mt_strings)
+		snprintf(mf->msg + l, sizeof mf->msg - l, _("; translation %s: %d strings (%d machine)"), r->lang, db->tr_strings,
+				db->tr_mt_strings);
+	else
+		snprintf(mf->msg + l, sizeof mf->msg - l, _("; translation %s: %d strings"), r->lang, db->tr_strings);
 }
 
 static void *worker(void *arg) {

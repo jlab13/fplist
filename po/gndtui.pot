@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gndtui 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 23:26+0200\n"
+"POT-Creation-Date: 2026-11-24 23:49+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -255,34 +255,39 @@ msgstr ""
 msgid "stale cache"
 msgstr ""
 
-#: src/metafetch.c:121
+#: src/metafetch.c:129
+#, c-format
+msgid "; translation %s: %d strings (%d machine)"
+msgstr ""
+
+#: src/metafetch.c:132
 #, c-format
 msgid "; translation %s: %d strings"
 msgstr ""
 
-#: src/metafetch.c:140
+#: src/metafetch.c:151
 msgid "metadata: no cache directory (HOME unset?)"
 msgstr ""
 
-#: src/metafetch.c:174
+#: src/metafetch.c:185
 #, c-format
 msgid "metadata: %s, %d params (%s)"
 msgstr ""
 
-#: src/metafetch.c:178
+#: src/metafetch.c:189
 #, c-format
 msgid "metadata unavailable: %s"
 msgstr ""
 
-#: src/metafetch.c:179
+#: src/metafetch.c:190
 msgid "offline and nothing cached"
 msgstr ""
 
-#: src/metafetch.c:179
+#: src/metafetch.c:190
 msgid "unknown error"
 msgstr ""
 
-#: src/metafetch.c:191
+#: src/metafetch.c:202
 msgid "metadata: cannot start thread"
 msgstr ""
 
@@ -677,49 +682,53 @@ msgstr ""
 msgid " · read-only"
 msgstr ""
 
-#: src/ui_table.c:429
+#: src/ui_table.c:411
+msgid " · machine translation"
+msgstr ""
+
+#: src/ui_table.c:431
 #, c-format
 msgid " Vehicle: %s   →   new: %s%s"
 msgstr ""
 
-#: src/ui_table.c:430
+#: src/ui_table.c:432
 msgid "  (writing...)"
 msgstr ""
 
-#: src/ui_table.c:431
+#: src/ui_table.c:433
 msgid "  (write FAILED)"
 msgstr ""
 
-#: src/ui_table.c:432
+#: src/ui_table.c:434
 msgid "  (not written - press w)"
 msgstr ""
 
-#: src/ui_table.c:435
+#: src/ui_table.c:437
 #, c-format
 msgid " Value: %s"
 msgstr ""
 
-#: src/ui_table.c:467
+#: src/ui_table.c:469
 msgid "(metadata loading...)"
 msgstr ""
 
-#: src/ui_table.c:467
+#: src/ui_table.c:469
 msgid "(no metadata for this parameter)"
 msgstr ""
 
-#: src/ui_table.c:507
+#: src/ui_table.c:509
 msgid "Downloading parameters..."
 msgstr ""
 
-#: src/ui_table.c:507
+#: src/ui_table.c:509
 msgid "No parameters received."
 msgstr ""
 
-#: src/ui_table.c:509
+#: src/ui_table.c:511
 msgid "No modified parameters (m: show all)."
 msgstr ""
 
-#: src/ui_table.c:511
+#: src/ui_table.c:513
 #, c-format
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr ""

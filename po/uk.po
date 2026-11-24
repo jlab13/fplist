@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gndtui 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 23:26+0200\n"
+"POT-Creation-Date: 2026-11-24 23:49+0200\n"
 "PO-Revision-Date: 2026-11-24 23:02+0200\n"
 "Last-Translator: JLab13\n"
 "Language-Team: Ukrainian\n"
@@ -284,34 +284,39 @@ msgstr "завантажено"
 msgid "stale cache"
 msgstr "застарілий кеш"
 
-#: src/metafetch.c:121
+#: src/metafetch.c:129
+#, c-format
+msgid "; translation %s: %d strings (%d machine)"
+msgstr "; переклад %s: %d рядків (машинних: %d)"
+
+#: src/metafetch.c:132
 #, c-format
 msgid "; translation %s: %d strings"
 msgstr "; переклад %s: %d рядків"
 
-#: src/metafetch.c:140
+#: src/metafetch.c:151
 msgid "metadata: no cache directory (HOME unset?)"
 msgstr "метадані: немає каталогу кешу (не задано HOME?)"
 
-#: src/metafetch.c:174
+#: src/metafetch.c:185
 #, c-format
 msgid "metadata: %s, %d params (%s)"
 msgstr "метадані: %s, %d параметрів (%s)"
 
-#: src/metafetch.c:178
+#: src/metafetch.c:189
 #, c-format
 msgid "metadata unavailable: %s"
 msgstr "метадані недоступні: %s"
 
-#: src/metafetch.c:179
+#: src/metafetch.c:190
 msgid "offline and nothing cached"
 msgstr "офлайн, а в кеші нічого немає"
 
-#: src/metafetch.c:179
+#: src/metafetch.c:190
 msgid "unknown error"
 msgstr "невідома помилка"
 
-#: src/metafetch.c:191
+#: src/metafetch.c:202
 msgid "metadata: cannot start thread"
 msgstr "метадані: не вдалося запустити потік"
 
@@ -719,49 +724,53 @@ msgstr " · потрібне перезавантаження"
 msgid " · read-only"
 msgstr " · лише читання"
 
-#: src/ui_table.c:429
+#: src/ui_table.c:411
+msgid " · machine translation"
+msgstr " · машинний переклад"
+
+#: src/ui_table.c:431
 #, c-format
 msgid " Vehicle: %s   →   new: %s%s"
 msgstr " В апараті: %s   →   нове: %s%s"
 
-#: src/ui_table.c:430
+#: src/ui_table.c:432
 msgid "  (writing...)"
 msgstr "  (запис...)"
 
-#: src/ui_table.c:431
+#: src/ui_table.c:433
 msgid "  (write FAILED)"
 msgstr "  (ПОМИЛКА запису)"
 
-#: src/ui_table.c:432
+#: src/ui_table.c:434
 msgid "  (not written - press w)"
 msgstr "  (не записано - натисніть w)"
 
-#: src/ui_table.c:435
+#: src/ui_table.c:437
 #, c-format
 msgid " Value: %s"
 msgstr " Значення: %s"
 
-#: src/ui_table.c:467
+#: src/ui_table.c:469
 msgid "(metadata loading...)"
 msgstr "(завантаження метаданих...)"
 
-#: src/ui_table.c:467
+#: src/ui_table.c:469
 msgid "(no metadata for this parameter)"
 msgstr "(для цього параметра немає метаданих)"
 
-#: src/ui_table.c:507
+#: src/ui_table.c:509
 msgid "Downloading parameters..."
 msgstr "Завантаження параметрів..."
 
-#: src/ui_table.c:507
+#: src/ui_table.c:509
 msgid "No parameters received."
 msgstr "Параметри не отримано."
 
-#: src/ui_table.c:509
+#: src/ui_table.c:511
 msgid "No modified parameters (m: show all)."
 msgstr "Змінених параметрів немає (m: показати всі)."
 
-#: src/ui_table.c:511
+#: src/ui_table.c:513
 #, c-format
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr "Немає параметрів за запитом «%s» (Esc очищає пошук)."

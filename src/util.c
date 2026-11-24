@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 #include <wchar.h>
 
 double now_s(void) {
@@ -125,6 +126,34 @@ static bool xdg_dir(const char *env, const char *fallback, char *out, size_t n) 
 bool path_cache_dir(char *out, size_t n) { return xdg_dir("XDG_CACHE_HOME", ".cache", out, n); }
 
 bool path_config_dir(char *out, size_t n) { return xdg_dir("XDG_CONFIG_HOME", ".config", out, n); }
+
+bool find_data_file(const char *rel, char *out, size_t n) {
+	struct stat st;
+	const char *env = getenv("GNDTUI_DATADIR");
+	if (env && *env) {
+		snprintf(out, n, "%s/%s", env, rel);
+		if (stat(out, &st) == 0)
+			return true;
+	}
+	char exe[1024];
+	ssize_t len = readlink("/proc/self/exe", exe, sizeof exe - 1);
+	if (len > 0) {
+		exe[len]	= '\0';
+		char *slash = strrchr(exe, '/');
+		if (slash) {
+			*slash = '\0';
+			snprintf(out, n, "%s/data/%s", exe, rel);
+			if (stat(out, &st) == 0)
+				return true;
+		}
+	}
+#ifdef GNDTUI_DATADIR
+	snprintf(out, n, "%s/%s", GNDTUI_DATADIR, rel);
+	if (stat(out, &st) == 0)
+		return true;
+#endif
+	return false;
+}
 
 void path_expand_home(const char *in, char *out, size_t n) {
 	const char *home = getenv("HOME");
