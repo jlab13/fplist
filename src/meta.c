@@ -393,11 +393,13 @@ bool meta_load_apm_xml(meta_db_t *db, const char *path, char *err, size_t errlen
 		size_t n  = fread(buf, 1, sizeof buf, f);
 		bool last = n < sizeof buf;
 		if (XML_Parse(xp, buf, (int)n, last) == XML_STATUS_ERROR) {
-#if XML_MAJOR_VERSION > 2 || (XML_MAJOR_VERSION == 2 && XML_MINOR_VERSION >= 9)
-			unsigned long line = (unsigned long)XML_GetCurrentLineNumber64(xp);
-#else
+/* The old call on purpose: XML_GetCurrentLineNumber64() only exists since
+ * expat 2.9, and using it would make the package require that version
+ * (Ubuntu 24.04 has 2.6, 26.04 has 2.7). The line fits XML_Size anyway. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 			unsigned long line = (unsigned long)XML_GetCurrentLineNumber(xp);
-#endif
+#pragma GCC diagnostic pop
 			snprintf(err, errlen, "%s:%lu: %s", path, line, XML_ErrorString(XML_GetErrorCode(xp)));
 			ok = false;
 			break;
