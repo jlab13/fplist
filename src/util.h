@@ -34,10 +34,10 @@ bool str_icontains(const char *hay, const char *needle);
 void str_squash_ws(char *s);
 
 /* Directories (created on demand). Return false if HOME is unknown. */
-bool path_cache_dir(char *out, size_t n);  /* $XDG_CACHE_HOME/gndtui */
-bool path_config_dir(char *out, size_t n); /* $XDG_CONFIG_HOME/gndtui */
+bool path_cache_dir(char *out, size_t n);  /* $XDG_CACHE_HOME/fpl */
+bool path_config_dir(char *out, size_t n); /* $XDG_CONFIG_HOME/fpl */
 bool mkdir_p(const char *path);
-/* Find a bundled data file (relative path, e.g. "px4/x.ts"): $GNDTUI_DATADIR,
+/* Find a bundled data file (relative path, e.g. "px4/x.ts"): $FPL_DATADIR,
  * then <exe dir>/data (build tree), then the install prefix. */
 bool find_data_file(const char *rel, char *out, size_t n);
 /* Expand a leading "~/" using $HOME. */

@@ -10,7 +10,7 @@
 
 #include "util.h"
 
-#ifdef GNDTUI_NLS
+#ifdef FPL_NLS
 static bool is_dir(const char *p) {
 	struct stat st;
 	return stat(p, &st) == 0 && S_ISDIR(st.st_mode);
@@ -18,8 +18,8 @@ static bool is_dir(const char *p) {
 #endif
 
 void i18n_init(void) {
-#ifdef GNDTUI_NLS
-	const char *dir = getenv("GNDTUI_LOCALEDIR");
+#ifdef FPL_NLS
+	const char *dir = getenv("FPL_LOCALEDIR");
 	char exe_locale[PATH_MAX];
 	if (!dir || !*dir) {
 		/* running from the build tree: catalogs are built into <exe dir>/locale */
@@ -37,10 +37,10 @@ void i18n_init(void) {
 		}
 	}
 	if (!dir || !*dir)
-		dir = GNDTUI_LOCALEDIR;
-	bindtextdomain("gndtui", dir);
-	bind_textdomain_codeset("gndtui", "UTF-8");
-	textdomain("gndtui");
+		dir = FPL_LOCALEDIR;
+	bindtextdomain("fpl", dir);
+	bind_textdomain_codeset("fpl", "UTF-8");
+	textdomain("fpl");
 #endif
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate machine translations and build gndtui's overlay .ts file.
+"""Validate machine translations and build fpl's overlay .ts file.
 
 Reads OUTDIR/items.json and every OUTDIR/batch_NNN.out.jsonl, checks each
 translation against the mechanical PX4 translation rules and writes a Qt

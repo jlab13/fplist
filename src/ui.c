@@ -137,7 +137,7 @@ static void draw_title(app_t *a) {
 	if (a->phase == PHASE_DETECT) {
 		static const char *spin[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
 		int k					  = (int)(now_s() * 10) % 10;
-		snprintf(left, sizeof left, " gndtui  │  %s %s", _("searching for vehicle"), spin[k]);
+		snprintf(left, sizeof left, " fpl  │  %s %s", _("searching for vehicle"), spin[k]);
 		right[0] = '\0';
 	} else {
 		vehicle_t *v = &a->veh;
@@ -166,8 +166,8 @@ static void draw_title(app_t *a) {
 		char pend_s[48] = "";
 		if (pend)
 			snprintf(pend_s, sizeof pend_s, ngettext("  │  %d modified", "  │  %d modified", pend), pend);
-		snprintf(left, sizeof left, " gndtui  │  %s %s %s  │  sys %u  │  %s  │  %s%s", vehicle_fw_name(v),
-				_(vehicle_type_name(v->mav_type)), ver, v->sysid, v->link.name, prog, pend_s);
+		snprintf(left, sizeof left, " fpl  │  %s %s %s  │  sys %u  │  %s  │  %s%s", vehicle_fw_name(v), _(vehicle_type_name(v->mav_type)),
+				ver, v->sysid, v->link.name, prog, pend_s);
 		if (a->meta && a->meta->tr_lang[0])
 			snprintf(right, sizeof right, "%s · %s", a->meta_status, meta_translate_enabled() ? a->meta->tr_lang : "EN");
 		else
@@ -410,7 +410,7 @@ static void draw_detect(app_t *a) {
 	static const char *hints[] = {
 			N_("Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"),
 			N_("UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."),
-			N_("Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui tcp:host:5760"),
+			N_("Force a connection:  fpl /dev/ttyACM0   fpl udp:14550   fpl tcp:host:5760"),
 	};
 	int hy = H - 2 - (int)ARRAY_LEN(hints);
 	ui_rgb_fg(n, C_DIM);
@@ -462,7 +462,7 @@ static void draw_help(app_t *a) {
 		/* never _(""): gettext returns the catalog header for an empty msgid */
 		w = MAX(w, (lines[i].keys ? KEYW + 2 : 0) + (lines[i].text[0] ? utf8_width(_(lines[i].text)) : 0));
 	char title[96];
-	snprintf(title, sizeof title, _("gndtui %s - keys"), GNDTUI_VERSION);
+	snprintf(title, sizeof title, _("Full Parameter List %s - keys"), FPL_VERSION);
 	w	   = MAX(w, utf8_width(title) + 4);
 	w	   = MIN(w + 6, (int)u->cols - 2);
 	int h  = MIN((int)ARRAY_LEN(lines) + 4, (int)u->rows - 2);

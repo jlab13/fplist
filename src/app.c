@@ -137,7 +137,7 @@ void app_save_file(app_t *a, const char *path_in) {
 	time_t t = time(NULL);
 	char ts[64];
 	strftime(ts, sizeof ts, "%Y-%m-%d %H:%M:%S", localtime(&t));
-	snprintf(header, sizeof header, "%s, %s %s %s, saved by gndtui", ts, vehicle_fw_name(&a->veh), vehicle_type_name(a->veh.mav_type), ver);
+	snprintf(header, sizeof header, "%s, %s %s %s, saved by fpl", ts, vehicle_fw_name(&a->veh), vehicle_type_name(a->veh.mav_type), ver);
 	if (paramfile_save(&a->ps, path, header, err, sizeof err))
 		app_msg(a, MSG_OK, ngettext("Saved %d parameter to %s", "Saved %d parameters to %s", a->ps.n), a->ps.n, path);
 	else
@@ -297,7 +297,7 @@ int app_run(app_t *a) {
 	signal(SIGPIPE, SIG_IGN);
 
 	if (a->tui && !ui_init(a)) {
-		fputs(_("gndtui: cannot initialise the terminal\n"), stderr);
+		fputs(_("fpl: cannot initialise the terminal\n"), stderr);
 		return 1;
 	}
 	if (!a->tui)
@@ -362,7 +362,7 @@ int app_run(app_t *a) {
 				break;
 			}
 			if (a->opt.dump_timeout > 0 && now - started > a->opt.dump_timeout) {
-				fprintf(stderr, _("gndtui: timeout (%s)\n"), a->phase == PHASE_DETECT ? _("no vehicle found") : _("parameter download"));
+				fprintf(stderr, _("fpl: timeout (%s)\n"), a->phase == PHASE_DETECT ? _("no vehicle found") : _("parameter download"));
 				if (a->phase == PHASE_VEHICLE && a->ps.n)
 					dump_params(a);
 				a->exit_code = 3;

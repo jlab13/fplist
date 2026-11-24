@@ -1,14 +1,14 @@
-# Ukrainian translations for gndtui package
-# Переклад українською для пакету gndtui.
-# Copyright (C) 2026 THE gndtui'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the gndtui package.
+# Ukrainian translations for fpl package
+# Переклад українською для пакету fpl.
+# Copyright (C) 2026 THE fpl'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the fpl package.
 # Automatically generated, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gndtui 0.1.0\n"
+"Project-Id-Version: fpl 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 00:50+0200\n"
+"POT-Creation-Date: 2026-11-25 01:08+0200\n"
 "PO-Revision-Date: 2026-11-24 23:02+0200\n"
 "Last-Translator: JLab13\n"
 "Language-Team: Ukrainian\n"
@@ -88,8 +88,8 @@ msgid "no metadata"
 msgstr "без метаданих"
 
 #: src/app.c:300
-msgid "gndtui: cannot initialise the terminal\n"
-msgstr "gndtui: не вдалося ініціалізувати термінал\n"
+msgid "fpl: cannot initialise the terminal\n"
+msgstr "fpl: не вдалося ініціалізувати термінал\n"
 
 #: src/app.c:304
 msgid "Searching for vehicle...\n"
@@ -97,8 +97,8 @@ msgstr "Пошук апарата...\n"
 
 #: src/app.c:365
 #, c-format
-msgid "gndtui: timeout (%s)\n"
-msgstr "gndtui: час очікування вичерпано (%s)\n"
+msgid "fpl: timeout (%s)\n"
+msgstr "fpl: час очікування вичерпано (%s)\n"
 
 #: src/app.c:365
 msgid "no vehicle found"
@@ -154,15 +154,15 @@ msgstr "з'єднано, очікування heartbeat"
 
 #: src/main.c:15
 msgid ""
-"Usage: gndtui [options] [CONNECTION]\n"
+"Usage: fpl [options] [CONNECTION]\n"
 "\n"
-"Terminal parameter editor for ArduPilot and PX4 (MAVLink).\n"
+"Full Parameter List: terminal parameter editor for ArduPilot and PX4 (MAVLink).\n"
 "Without CONNECTION the vehicle is auto-detected like QGroundControl does:\n"
 "USB flight controllers / SiK radios, UDP :14550 and TCP 127.0.0.1:5760 (SITL).\n"
 msgstr ""
-"Використання: gndtui [опції] [ПІДКЛЮЧЕННЯ]\n"
+"Використання: fpl [опції] [ПІДКЛЮЧЕННЯ]\n"
 "\n"
-"Термінальний редактор параметрів ArduPilot і PX4 (MAVLink).\n"
+"Full Parameter List: термінальний редактор параметрів ArduPilot і PX4 (MAVLink).\n"
 "Без ПІДКЛЮЧЕННЯ апарат шукається автоматично, як у QGroundControl:\n"
 "USB польотні контролери / SiK-радіомодеми, UDP :14550 і TCP 127.0.0.1:5760 (SITL).\n"
 
@@ -249,8 +249,8 @@ msgstr "  (завантажувач)"
 #. TRANSLATORS: first %s is what was expected (baud rate, port, ...)
 #: src/main.c:75
 #, c-format
-msgid "gndtui: invalid %s '%s'\n"
-msgstr "gndtui: неправильне значення (%s): '%s'\n"
+msgid "fpl: invalid %s '%s'\n"
+msgstr "fpl: неправильне значення (%s): '%s'\n"
 
 #: src/main.c:127
 msgid "baud rate"
@@ -269,12 +269,12 @@ msgid "timeout"
 msgstr "тайм-аут"
 
 #: src/main.c:193
-msgid "gndtui: only one connection can be given\n"
-msgstr "gndtui: можна вказати лише одне підключення\n"
+msgid "fpl: only one connection can be given\n"
+msgstr "fpl: можна вказати лише одне підключення\n"
 
 #: src/main.c:198
-msgid "gndtui: nothing to connect to (all auto-detect sources disabled)\n"
-msgstr "gndtui: немає до чого підключатися (усі джерела автопошуку вимкнено)\n"
+msgid "fpl: nothing to connect to (all auto-detect sources disabled)\n"
+msgstr "fpl: немає до чого підключатися (усі джерела автопошуку вимкнено)\n"
 
 #: src/metafetch.c:81
 msgid "cached"
@@ -458,11 +458,9 @@ msgstr "прослуховування UDP :14550, TCP 127.0.0.1:5760 (ArduPilot
 
 #: src/ui.c:413
 msgid ""
-"Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui "
-"tcp:host:5760"
+"Force a connection:  fpl /dev/ttyACM0   fpl udp:14550   fpl tcp:host:5760"
 msgstr ""
-"Примусове підключення:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui "
-"tcp:host:5760"
+"Примусове підключення:  fpl /dev/ttyACM0   fpl udp:14550   fpl tcp:host:5760"
 
 #: src/ui.c:433
 msgid "Navigation"
@@ -562,8 +560,8 @@ msgstr "вихід"
 
 #: src/ui.c:465
 #, c-format
-msgid "gndtui %s - keys"
-msgstr "gndtui %s - клавіші"
+msgid "Full Parameter List %s - keys"
+msgstr "Full Parameter List %s - клавіші"
 
 #: src/ui.c:501
 msgid "terminal too small"
@@ -798,39 +796,39 @@ msgstr "  (не записано - натисніть w)"
 msgid " Value: %s"
 msgstr " Значення: %s"
 
-#: src/ui_table.c:476
+#: src/ui_table.c:467
 msgid "(metadata loading...)"
 msgstr "(завантаження метаданих...)"
 
-#: src/ui_table.c:476
+#: src/ui_table.c:467
 msgid "(no metadata for this parameter)"
 msgstr "(для цього параметра немає метаданих)"
 
-#: src/ui_table.c:516
+#: src/ui_table.c:507
 msgid "Downloading parameters..."
 msgstr "Завантаження параметрів..."
 
-#: src/ui_table.c:516
+#: src/ui_table.c:507
 msgid "No parameters received."
 msgstr "Параметри не отримано."
 
-#: src/ui_table.c:518
+#: src/ui_table.c:509
 msgid "No modified parameters (m: show all)."
 msgstr "Змінених параметрів немає (m: показати всі)."
 
-#: src/ui_table.c:520
+#: src/ui_table.c:511
 msgid "All parameters have their default values (n: show all)."
 msgstr "Усі параметри мають типові значення (n: показати всі)."
 
-#: src/ui_table.c:521
+#: src/ui_table.c:512
 msgid "Default values are unknown for this vehicle (n: show all)."
 msgstr "Типові значення для цього апарата невідомі (n: показати всі)."
 
-#: src/ui_table.c:523
+#: src/ui_table.c:514
 msgid "No parameters in this group (Esc: all groups)."
 msgstr "У цій групі немає параметрів (Esc: усі групи)."
 
-#: src/ui_table.c:525
+#: src/ui_table.c:516
 #, c-format
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr "Немає параметрів за запитом «%s» (Esc очищає пошук)."
@@ -971,6 +969,10 @@ msgstr "VTOL"
 #: src/vehicle.c:641
 msgid "Vehicle"
 msgstr "Апарат"
+
+#, c-format
+#~ msgid "fpl %s - keys"
+#~ msgstr "fpl %s - клавіші"
 
 #~ msgid "show only modified parameters"
 #~ msgstr "лише змінені параметри"

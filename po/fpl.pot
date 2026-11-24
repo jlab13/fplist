@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gndtui 0.1.0\n"
+"Project-Id-Version: fpl 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 00:50+0200\n"
+"POT-Creation-Date: 2026-11-25 01:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,7 +85,7 @@ msgid "no metadata"
 msgstr ""
 
 #: src/app.c:300
-msgid "gndtui: cannot initialise the terminal\n"
+msgid "fpl: cannot initialise the terminal\n"
 msgstr ""
 
 #: src/app.c:304
@@ -94,7 +94,7 @@ msgstr ""
 
 #: src/app.c:365
 #, c-format
-msgid "gndtui: timeout (%s)\n"
+msgid "fpl: timeout (%s)\n"
 msgstr ""
 
 #: src/app.c:365
@@ -151,9 +151,10 @@ msgstr ""
 
 #: src/main.c:15
 msgid ""
-"Usage: gndtui [options] [CONNECTION]\n"
+"Usage: fpl [options] [CONNECTION]\n"
 "\n"
-"Terminal parameter editor for ArduPilot and PX4 (MAVLink).\n"
+"Full Parameter List: terminal parameter editor for ArduPilot and PX4 "
+"(MAVLink).\n"
 "Without CONNECTION the vehicle is auto-detected like QGroundControl does:\n"
 "USB flight controllers / SiK radios, UDP :14550 and TCP 127.0.0.1:5760 "
 "(SITL).\n"
@@ -218,7 +219,7 @@ msgstr ""
 #. TRANSLATORS: first %s is what was expected (baud rate, port, ...)
 #: src/main.c:75
 #, c-format
-msgid "gndtui: invalid %s '%s'\n"
+msgid "fpl: invalid %s '%s'\n"
 msgstr ""
 
 #: src/main.c:127
@@ -238,11 +239,11 @@ msgid "timeout"
 msgstr ""
 
 #: src/main.c:193
-msgid "gndtui: only one connection can be given\n"
+msgid "fpl: only one connection can be given\n"
 msgstr ""
 
 #: src/main.c:198
-msgid "gndtui: nothing to connect to (all auto-detect sources disabled)\n"
+msgid "fpl: nothing to connect to (all auto-detect sources disabled)\n"
 msgstr ""
 
 #: src/metafetch.c:81
@@ -420,8 +421,7 @@ msgstr ""
 
 #: src/ui.c:413
 msgid ""
-"Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui "
-"tcp:host:5760"
+"Force a connection:  fpl /dev/ttyACM0   fpl udp:14550   fpl tcp:host:5760"
 msgstr ""
 
 #: src/ui.c:433
@@ -522,7 +522,7 @@ msgstr ""
 
 #: src/ui.c:465
 #, c-format
-msgid "gndtui %s - keys"
+msgid "Full Parameter List %s - keys"
 msgstr ""
 
 #: src/ui.c:501
@@ -752,39 +752,39 @@ msgstr ""
 msgid " Value: %s"
 msgstr ""
 
-#: src/ui_table.c:476
+#: src/ui_table.c:467
 msgid "(metadata loading...)"
 msgstr ""
 
-#: src/ui_table.c:476
+#: src/ui_table.c:467
 msgid "(no metadata for this parameter)"
 msgstr ""
 
-#: src/ui_table.c:516
+#: src/ui_table.c:507
 msgid "Downloading parameters..."
 msgstr ""
 
-#: src/ui_table.c:516
+#: src/ui_table.c:507
 msgid "No parameters received."
 msgstr ""
 
-#: src/ui_table.c:518
+#: src/ui_table.c:509
 msgid "No modified parameters (m: show all)."
 msgstr ""
 
-#: src/ui_table.c:520
+#: src/ui_table.c:511
 msgid "All parameters have their default values (n: show all)."
 msgstr ""
 
-#: src/ui_table.c:521
+#: src/ui_table.c:512
 msgid "Default values are unknown for this vehicle (n: show all)."
 msgstr ""
 
-#: src/ui_table.c:523
+#: src/ui_table.c:514
 msgid "No parameters in this group (Esc: all groups)."
 msgstr ""
 
-#: src/ui_table.c:525
+#: src/ui_table.c:516
 #, c-format
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr ""

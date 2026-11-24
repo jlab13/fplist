@@ -1,4 +1,4 @@
-/* fakevehicle - minimal MAVLink vehicle for testing gndtui.
+/* fakevehicle - minimal MAVLink vehicle for testing fpl.
  *
  * Speaks HEARTBEAT, AUTOPILOT_VERSION and the parameter protocol, emulating
  * either ArduPilot (C-cast encoding) or PX4 (byte-wise encoding). Can drop a

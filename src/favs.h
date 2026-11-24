@@ -1,5 +1,5 @@
 /* Favourite parameters ("Fav" column), persisted in
- * $XDG_CONFIG_HOME/gndtui/favorites (one name per line). */
+ * $XDG_CONFIG_HOME/fpl/favorites (one name per line). */
 #pragma once
 
 #include <stdbool.h>

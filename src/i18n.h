@@ -2,12 +2,12 @@
  *   _("text")      translate now
  *   N_("text")     mark for extraction only (static tables), translate on use
  *   ngettext(s, p, n) plural forms
- * Built without NLS (-DGNDTUI_NLS=OFF) these collapse to the English text. */
+ * Built without NLS (-DFPL_NLS=OFF) these collapse to the English text. */
 #pragma once
 
 #include <stddef.h>
 
-#ifdef GNDTUI_NLS
+#ifdef FPL_NLS
 #include <libintl.h>
 #define _(s) gettext(s)
 #else
@@ -16,7 +16,7 @@
 #endif
 #define N_(s) (s)
 
-/* Bind the "gndtui" text domain. Looks for catalogs in $GNDTUI_LOCALEDIR,
+/* Bind the "fpl" text domain. Looks for catalogs in $FPL_LOCALEDIR,
  * then next to the executable (build tree: <exe dir>/locale), then in the
  * install prefix. Call after setlocale(). */
 void i18n_init(void);

@@ -1,5 +1,5 @@
 /* Background download + parse of parameter metadata, with an on-disk cache
- * in $XDG_CACHE_HOME/gndtui.
+ * in $XDG_CACHE_HOME/fpl.
  *   ArduPilot: https://autotest.ardupilot.org/Parameters/versioned/<V>/stable-X.Y.Z/apm.pdef.xml
  *              falling back to .../Parameters/<Vehicle>/apm.pdef.xml (master)
  *   PX4:       PX4ParameterFactMetaData.json from the QGroundControl repo,

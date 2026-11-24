@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Prepare PX4 parameter metadata strings for machine translation.
 
-Collects every English string gndtui shows for PX4 parameters (shortDesc,
+Collects every English string fpl shows for PX4 parameters (shortDesc,
 longDesc, enum value and bitmask labels) that has no approved translation in
 the official PX4-Metadata-Translations .ts file, de-duplicates them by
 (kind, text) and writes batches grouped by subsystem prefix, each with
 context and the approved translations of the same subsystem as reference.
 
 usage: prepare.py META_JSON OFFICIAL_TS OUTDIR [--batch-chars N]
-  META_JSON    PX4ParameterFactMetaData.json (as cached by gndtui)
+  META_JSON    PX4ParameterFactMetaData.json (as cached by fpl)
   OFFICIAL_TS  parameters_<ll_CC>.ts from PX4-Metadata-Translations
   OUTDIR       writes items.json, batch_NNN.jsonl, batch_NNN.ref.jsonl
 """

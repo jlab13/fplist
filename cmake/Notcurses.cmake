@@ -1,29 +1,29 @@
-# Provides the interface target `gndtui_notcurses`.
+# Provides the interface target `fpl_notcurses`.
 #
-# 1. If GNDTUI_SYSTEM_NOTCURSES is ON and pkg-config finds notcurses-core,
+# 1. If FPL_SYSTEM_NOTCURSES is ON and pkg-config finds notcurses-core,
 #    the system library is used.
 # 2. Otherwise notcurses is downloaded and built (core only: no multimedia,
 #    no C++) at configure time into the build tree and linked statically.
 #    Needs: ncursesw (terminfo), libunistring, libdeflate.
 
-set(GNDTUI_NOTCURSES_VERSION 3.0.17)
-add_library(gndtui_notcurses INTERFACE)
+set(FPL_NOTCURSES_VERSION 3.0.17)
+add_library(fpl_notcurses INTERFACE)
 
-if(GNDTUI_SYSTEM_NOTCURSES)
+if(FPL_SYSTEM_NOTCURSES)
   pkg_check_modules(NOTCURSES QUIET IMPORTED_TARGET notcurses-core>=3.0)
 endif()
 
 if(NOTCURSES_FOUND)
   message(STATUS "notcurses: using system notcurses-core ${NOTCURSES_VERSION}")
-  target_link_libraries(gndtui_notcurses INTERFACE PkgConfig::NOTCURSES)
+  target_link_libraries(fpl_notcurses INTERFACE PkgConfig::NOTCURSES)
   return()
 endif()
 
-message(STATUS "notcurses: building bundled notcurses ${GNDTUI_NOTCURSES_VERSION}")
+message(STATUS "notcurses: building bundled notcurses ${FPL_NOTCURSES_VERSION}")
 
 # Download only (SOURCE_SUBDIR points nowhere); built below as a separate project.
 FetchContent_Declare(notcurses_src
-  URL https://github.com/dankamongmen/notcurses/archive/refs/tags/v${GNDTUI_NOTCURSES_VERSION}.tar.gz
+  URL https://github.com/dankamongmen/notcurses/archive/refs/tags/v${FPL_NOTCURSES_VERSION}.tar.gz
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   SOURCE_SUBDIR _none)
 FetchContent_MakeAvailable(notcurses_src)
@@ -71,6 +71,6 @@ pkg_check_modules(NCURSESW REQUIRED IMPORTED_TARGET ncursesw)
 find_library(UNISTRING_LIB unistring REQUIRED)
 find_library(DEFLATE_LIB deflate REQUIRED)
 
-target_include_directories(gndtui_notcurses SYSTEM INTERFACE ${_nc_install}/include)
-target_link_libraries(gndtui_notcurses INTERFACE
+target_include_directories(fpl_notcurses SYSTEM INTERFACE ${_nc_install}/include)
+target_link_libraries(fpl_notcurses INTERFACE
   ${_nc_lib} PkgConfig::NCURSESW ${UNISTRING_LIB} ${DEFLATE_LIB} Threads::Threads m)

@@ -43,7 +43,7 @@ static bool download(const char *url, const char *dest, char *err, size_t errlen
 	curl_easy_setopt(c, CURLOPT_CONNECTTIMEOUT, 10L);
 	curl_easy_setopt(c, CURLOPT_TIMEOUT, 120L);
 	curl_easy_setopt(c, CURLOPT_NOSIGNAL, 1L);
-	curl_easy_setopt(c, CURLOPT_USERAGENT, "gndtui/" GNDTUI_VERSION);
+	curl_easy_setopt(c, CURLOPT_USERAGENT, "fpl/" FPL_VERSION);
 	curl_easy_setopt(c, CURLOPT_ACCEPT_ENCODING, ""); /* gzip: the .ts files compress 10x */
 	curl_easy_setopt(c, CURLOPT_ERRORBUFFER, ebuf);
 	curl_easy_setopt(c, CURLOPT_NOPROGRESS, 0L);
@@ -99,7 +99,7 @@ static meta_db_t *try_load(const char *path, char *err, size_t errlen) {
 }
 
 /* Translations: for PX4 first the reviewed community translations (Crowdin,
- * downloaded), then gndtui's bundled machine translations (PX4 and
+ * downloaded), then fpl's bundled machine translations (PX4 and
  * ArduPilot), which only fill the gaps. Missing files = silently none. */
 static void load_translation(metafetch_t *mf, const char *cache) {
 	const metafetch_req_t *r = &mf->req;

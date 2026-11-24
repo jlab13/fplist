@@ -1,4 +1,4 @@
-/* gndtui - terminal parameter editor for ArduPilot and PX4 over MAVLink. */
+/* fpl (Full Parameter List) - terminal parameter editor for ArduPilot and PX4 over MAVLink. */
 #include <getopt.h>
 #include <locale.h>
 #include <stdio.h>
@@ -12,9 +12,9 @@
 #include "util.h"
 
 static void usage(FILE *f) {
-	fputs(_("Usage: gndtui [options] [CONNECTION]\n"
+	fputs(_("Usage: fpl [options] [CONNECTION]\n"
 			"\n"
-			"Terminal parameter editor for ArduPilot and PX4 (MAVLink).\n"
+			"Full Parameter List: terminal parameter editor for ArduPilot and PX4 (MAVLink).\n"
 			"Without CONNECTION the vehicle is auto-detected like QGroundControl does:\n"
 			"USB flight controllers / SiK radios, UDP :14550 and TCP 127.0.0.1:5760 (SITL).\n"),
 			f);
@@ -72,7 +72,7 @@ static int parse_int(const char *s, int lo, int hi, const char *what) {
 	long v = strtol(s, &end, 10);
 	if (end == s || *end || v < lo || v > hi) {
 		/* TRANSLATORS: first %s is what was expected (baud rate, port, ...) */
-		fprintf(stderr, _("gndtui: invalid %s '%s'\n"), what, s);
+		fprintf(stderr, _("fpl: invalid %s '%s'\n"), what, s);
 		exit(2);
 	}
 	return (int)v;
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
 			log_path = optarg;
 			break;
 		case 'V':
-			printf("gndtui %s\n", GNDTUI_VERSION);
+			printf("fpl (Full Parameter List) %s\n", FPL_VERSION);
 			return 0;
 		case 'h':
 			usage(stdout);
@@ -185,24 +185,24 @@ int main(int argc, char **argv) {
 	if (optind < argc) {
 		char err[256];
 		if (!link_spec_parse(argv[optind], o->baud, &o->forced_spec, err, sizeof err)) {
-			fprintf(stderr, "gndtui: %s\n", err);
+			fprintf(stderr, "fpl: %s\n", err);
 			return 2;
 		}
 		o->forced = true;
 		if (optind + 1 < argc) {
-			fputs(_("gndtui: only one connection can be given\n"), stderr);
+			fputs(_("fpl: only one connection can be given\n"), stderr);
 			return 2;
 		}
 	}
 	if (!o->forced && !o->serial && !o->udp && !o->tcp) {
-		fputs(_("gndtui: nothing to connect to (all auto-detect sources disabled)\n"), stderr);
+		fputs(_("fpl: nothing to connect to (all auto-detect sources disabled)\n"), stderr);
 		return 2;
 	}
 	if (log_path && !log_open(log_path)) {
 		perror(log_path);
 		return 1;
 	}
-	LOG("gndtui %s starting", GNDTUI_VERSION);
+	LOG("fpl %s starting", FPL_VERSION);
 
 	metafetch_global_init();
 	int rc = app_run(&app);

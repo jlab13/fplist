@@ -1,6 +1,6 @@
-# gndtui
+# Full Parameter List (`fpl`)
 
-Термінальний (TUI) редактор параметрів для **ArduPilot** і **PX4** через MAVLink.
+Термінальний (TUI) редактор параметрів для **ArduPilot** і **PX4** через MAVLink. Команда — `fpl`.
 Таблиця з колонками як у Mission Planner «Full Parameter List»:
 `Command | Value | Units | Options | Desc | Fav`.
 
@@ -18,28 +18,28 @@
 ```sh
 cmake -S . -B build
 cmake --build build -j
-./build/gndtui
+./build/fpl
 ```
 
 MAVLink і cJSON завантажуються CMake (зафіксовані версії). Якщо в системі є
 `notcurses-core` ≥ 3.0, береться він; інакше notcurses 3.0.17 збирається статично в `build/`
-(без мультимедіа і C++). Примусово використати вбудований: `-DGNDTUI_SYSTEM_NOTCURSES=OFF`.
-Збірка з санітайзерами: `-DGNDTUI_ASAN=ON`.
+(без мультимедіа і C++). Примусово використати вбудований: `-DFPL_SYSTEM_NOTCURSES=OFF`.
+Збірка з санітайзерами: `-DFPL_ASAN=ON`.
 
 ## Запуск
 
 ```sh
-gndtui                          # автопошук
-gndtui /dev/ttyACM0             # USB (швидкість для CDC не важлива)
-gndtui /dev/ttyUSB0:57600       # телеметрійний радіомодем
-gndtui udp:14550                # слухати UDP (PX4 SITL, companion, ESP-телеметрія)
-gndtui udpout:192.168.4.1:14550 # надсилати на конкретну адресу
-gndtui tcp:127.0.0.1:5760       # ArduPilot SITL
-gndtui --list                   # показати знайдені серійні порти і їх класифікацію
-gndtui --dump > params.tsv      # без UI: вивантажити параметри в TSV і вийти
+fpl                          # автопошук
+fpl /dev/ttyACM0             # USB (швидкість для CDC не важлива)
+fpl /dev/ttyUSB0:57600       # телеметрійний радіомодем
+fpl udp:14550                # слухати UDP (PX4 SITL, companion, ESP-телеметрія)
+fpl udpout:192.168.4.1:14550 # надсилати на конкретну адресу
+fpl tcp:127.0.0.1:5760       # ArduPilot SITL
+fpl --list                   # показати знайдені серійні порти і їх класифікацію
+fpl --dump > params.tsv      # без UI: вивантажити параметри в TSV і вийти
 ```
 
-Інші опції: `gndtui --help`.
+Інші опції: `fpl --help`.
 
 ### Автопошук
 
@@ -102,7 +102,7 @@ gndtui --dump > params.tsv      # без UI: вивантажити параме
 | ArduPilot | `autotest.ardupilot.org/Parameters/versioned/<Copter\|Plane\|Rover\|Sub\|Tracker>/stable-X.Y.Z/apm.pdef.xml` для офіційних релізів, інакше `…/Parameters/<ArduCopter\|…>/apm.pdef.xml` (master) | назавжди для версійних, 7 днів для master |
 | PX4 | `PX4ParameterFactMetaData.json` з репозиторію QGroundControl | 7 днів |
 
-Кеш лежить у `$XDG_CACHE_HOME/gndtui` (`~/.cache/gndtui`). `--offline` не завантажує нічого,
+Кеш лежить у `$XDG_CACHE_HOME/fpl` (`~/.cache/fpl`). `--offline` не завантажує нічого,
 `--meta FILE` бере свій `apm.pdef.xml` або PX4 `.json`.
 
 ### Переклад описів параметрів
@@ -141,7 +141,7 @@ gndtui --dump > params.tsv      # без UI: вивантажити параме
 | `m` | лише змінені в цій сесії (ще не записані або з помилкою запису) |
 | `n` | лише відмінні від типових, як «Modified» у QGroundControl. Такі значення підсвічені кольором, а типове значення видно в панелі деталей |
 | `g` | групи параметрів як у QGroundControl (категорія → група). текст, який ви друкуєте, одразу фільтрує список груп (`Esc` очищає фільтр, а якщо він порожній, закриває діалог), `Enter` вибирає, вибрана група стає фільтром таблиці, а `Esc` у таблиці знімає фільтр |
-| `f` / `Space` / клік у колонці Fav | обране (обране сортується першим, зберігається в `~/.config/gndtui/favorites`) |
+| `f` / `Space` / клік у колонці Fav | обране (обране сортується першим, зберігається в `~/.config/fpl/favorites`) |
 | `v` | багаторядкові рядки, як у Mission Planner |
 | `d` | панель деталей (тип, діапазон, крок, default, reboot required, повний опис) |
 | `t` | описи параметрів: переклад / англійський оригінал |
@@ -161,21 +161,21 @@ QGroundControl (`sysid compid NAME VALUE TYPE`). Завантажені знач
 Використовується GNU gettext (libintl входить у glibc). Мова береться з `LANG` / `LC_MESSAGES`:
 
 ```sh
-LANG=uk_UA.UTF-8 ./build/gndtui   # українською
-LANG=C ./build/gndtui             # англійською
+LANG=uk_UA.UTF-8 ./build/fpl   # українською
+LANG=C ./build/fpl             # англійською
 ```
 
-- `po/LINGUAS`: список мов, `po/<мова>.po`: переклади, `po/gndtui.pot`: шаблон.
+- `po/LINGUAS`: список мов, `po/<мова>.po`: переклади, `po/fpl.pot`: шаблон.
 - Збірка компілює `.mo` у `build/locale/`, тож з каталогу збірки переклад працює без встановлення.
-  `make install` ставить їх у `share/locale`. Каталог можна перевизначити змінною `GNDTUI_LOCALEDIR`.
+  `make install` ставить їх у `share/locale`. Каталог можна перевизначити змінною `FPL_LOCALEDIR`.
 - Після зміни рядків у коді виконайте `cmake --build build --target pot`. Ця ціль оновить шаблон і зіллє нові
   рядки в усі `.po`. Перекладати зручно в Poedit або Weblate.
-- Нова мова: `msginit -i po/gndtui.pot -l <мова> -o po/<мова>.po`, потім додайте мову в `po/LINGUAS`.
+- Нова мова: `msginit -i po/fpl.pot -l <мова> -o po/<мова>.po`, потім додайте мову в `po/LINGUAS`.
 - У коді: `_("…")` перекладає рядок, `N_("…")` позначає рядки в статичних таблицях, а для множини є `ngettext()`.
   Пастка: `_("")` повертає заголовок каталогу, тому порожні рядки не перекладаємо.
 - Не перекладаються: назви клавіш, debug-лог, заголовок TSV у `--dump`, описи параметрів з метаданих
   (ArduPilot і PX4 публікують їх лише англійською).
-- Без gettext: `-DGNDTUI_NLS=OFF`.
+- Без gettext: `-DFPL_NLS=OFF`.
 
 ## Тестування без заліза
 
@@ -187,7 +187,7 @@ build/fakevehicle --px4 --tcp 5760           # PX4 (byte-wise) як TCP-серв
 build/fakevehicle --pty                      # друкує /dev/pts/N — емуляція серійного порту
 ```
 
-PX4 SITL: `docker run --rm -it --network host px4io/px4-sitl:latest`, потім просто `gndtui`.
+PX4 SITL: `docker run --rm -it --network host px4io/px4-sitl:latest`, потім просто `fpl`.
 
 ## Структура
 

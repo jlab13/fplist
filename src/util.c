@@ -29,7 +29,7 @@ size_t xstrlcpy(char *dst, const char *src, size_t dst_size) {
 }
 
 static void oom(void) {
-	fputs("gndtui: out of memory\n", stderr);
+	fputs("fpl: out of memory\n", stderr);
 	abort();
 }
 
@@ -113,12 +113,20 @@ bool mkdir_p(const char *path) {
 static bool xdg_dir(const char *env, const char *fallback, char *out, size_t n) {
 	const char *base = getenv(env);
 	if (base && *base) {
-		snprintf(out, n, "%s/gndtui", base);
+		snprintf(out, n, "%s/fpl", base);
 	} else {
 		const char *home = getenv("HOME");
 		if (!home || !*home)
 			return false;
-		snprintf(out, n, "%s/%s/gndtui", home, fallback);
+		snprintf(out, n, "%s/%s/fpl", home, fallback);
+	}
+	/* the project used to be called "gndtui": take its cache/config over once */
+	struct stat st;
+	if (stat(out, &st) != 0) {
+		char old[1024];
+		snprintf(old, sizeof old, "%.*s/gndtui", (int)(strrchr(out, '/') - out), out);
+		if (stat(old, &st) == 0 && S_ISDIR(st.st_mode) && rename(old, out) == 0)
+			return true;
 	}
 	return mkdir_p(out);
 }
@@ -129,7 +137,7 @@ bool path_config_dir(char *out, size_t n) { return xdg_dir("XDG_CONFIG_HOME", ".
 
 bool find_data_file(const char *rel, char *out, size_t n) {
 	struct stat st;
-	const char *env = getenv("GNDTUI_DATADIR");
+	const char *env = getenv("FPL_DATADIR");
 	if (env && *env) {
 		snprintf(out, n, "%s/%s", env, rel);
 		if (stat(out, &st) == 0)
@@ -147,8 +155,8 @@ bool find_data_file(const char *rel, char *out, size_t n) {
 				return true;
 		}
 	}
-#ifdef GNDTUI_DATADIR
-	snprintf(out, n, "%s/%s", GNDTUI_DATADIR, rel);
+#ifdef FPL_DATADIR
+	snprintf(out, n, "%s/%s", FPL_DATADIR, rel);
 	if (stat(out, &st) == 0)
 		return true;
 #endif

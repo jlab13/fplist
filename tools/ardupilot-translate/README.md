@@ -1,7 +1,7 @@
 # Machine translation of ArduPilot parameter metadata
 
 ArduPilot publishes its parameter documentation (`apm.pdef.xml`) only in
-English and has no community translation. gndtui ships a machine translation
+English and has no community translation. fpl ships a machine translation
 in `translations/ardupilot/parameters_<ll_CC>.mt.ts`, shown with a
 "machine translation" mark in the details pane.
 
@@ -17,7 +17,7 @@ old translation simply stops matching and the English text is shown.
 W=build/apm-mt; mkdir -p $W
 # metadata: master for every vehicle + the latest stable versions
 for v in ArduCopter ArduPlane Rover ArduSub AntennaTracker Blimp Heli; do
-  curl -sfL --compressed -o ~/.cache/gndtui/apm-$v-master.pdef.xml \
+  curl -sfL --compressed -o ~/.cache/fpl/apm-$v-master.pdef.xml \
        https://autotest.ardupilot.org/Parameters/$v/apm.pdef.xml
 done
 # (optionally versioned/<Copter|Plane|Rover|Sub>/stable-X.Y.Z/apm.pdef.xml)
@@ -28,7 +28,7 @@ gh api repos/PX4/PX4-Metadata-Translations/contents/tools/crowdin/TRANSLATION_GU
 gh api repos/PX4/PX4-Metadata-Translations/contents/tools/crowdin/terms/uk.md --jq .content | base64 -d > $W/uk_terms.md
 cp tools/ardupilot-translate/decisions.uk.md $W/decisions.md
 
-python3 tools/ardupilot-translate/prepare.py $W ~/.cache/gndtui/apm-*.pdef.xml
+python3 tools/ardupilot-translate/prepare.py $W ~/.cache/fpl/apm-*.pdef.xml
 
 # translate batch_NNN.jsonl -> batch_NNN.out.jsonl ({"id","text"}) with an LLM
 # (we used Claude Sonnet, one agent per batch, following the three files above)
