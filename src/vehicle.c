@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "i18n.h"
 #include "util.h"
 
 #define HB_PERIOD 1.0
@@ -115,9 +116,10 @@ static void download_finished(vehicle_t *v, bool complete) {
 	v->pdl			= complete ? PDL_DONE : PDL_FAILED;
 	v->pdl_duration = now_s() - v->pdl_started;
 	if (complete)
-		vmsg(v, MSG_OK, "Downloaded %d parameters in %.1f s", v->ps->expected, v->pdl_duration);
+		vmsg(v, MSG_OK, ngettext("Downloaded %d parameter in %.1f s", "Downloaded %d parameters in %.1f s", v->ps->expected),
+				v->ps->expected, v->pdl_duration);
 	else
-		vmsg(v, MSG_ERR, "Parameter download incomplete: %d of %d received", v->ps->got_count, v->ps->expected);
+		vmsg(v, MSG_ERR, _("Parameter download incomplete: %d of %d received"), v->ps->got_count, v->ps->expected);
 }
 
 static void on_param_value(vehicle_t *v, const mavlink_message_t *msg) {
@@ -212,9 +214,9 @@ static void on_message(void *ctx, link_t *l, const mavlink_message_t *msg) {
 		v->hb_lost = false;
 		if (v->reconnecting) {
 			v->reconnecting = false;
-			vmsg(v, MSG_OK, "Reconnected via %s", v->link.name);
+			vmsg(v, MSG_OK, _("Reconnected via %s"), v->link.name);
 		} else if (!was_alive) {
-			vmsg(v, MSG_OK, "Vehicle heartbeat restored");
+			vmsg(v, MSG_OK, "%s", _("Vehicle heartbeat restored"));
 		}
 		break;
 	}
@@ -318,7 +320,7 @@ void vehicle_service(vehicle_t *v, short revents) {
 		v->link_up		  = false;
 		v->next_reconnect = now_s() + 1.0;
 		if (!v->reconnecting)
-			vmsg(v, MSG_ERR, "Link lost (%s) - reconnecting", v->link.err);
+			vmsg(v, MSG_ERR, _("Link lost (%s) - reconnecting"), v->link.err);
 		v->reconnecting = true;
 	}
 }
@@ -373,7 +375,7 @@ static void tick_download(vehicle_t *v, double now) {
 			return;
 		if (v->pdl_list_tries >= LIST_TRIES) {
 			v->pdl = PDL_FAILED;
-			vmsg(v, MSG_ERR, "No response to parameter list request");
+			vmsg(v, MSG_ERR, "%s", _("No response to parameter list request"));
 			return;
 		}
 		v->pdl_list_tries++;
@@ -430,7 +432,7 @@ static void tick_writes(vehicle_t *v, double now) {
 			ps->revision++;
 			char cur[32];
 			param_format(p, p->value, cur, sizeof cur);
-			vmsg(v, MSG_ERR, "Write %s failed (vehicle value %s)", p->name, cur);
+			vmsg(v, MSG_ERR, _("Write %s failed (vehicle value %s)"), p->name, cur);
 		} else if (p->wstate == PW_QUEUED) {
 			queued++;
 		}
@@ -445,10 +447,11 @@ static void tick_writes(vehicle_t *v, double now) {
 	}
 	if (v->w_total && in_flight == 0 && queued == 0) {
 		if (v->w_failed)
-			vmsg(v, MSG_ERR, "Wrote %d of %d parameters, %d failed", v->w_ok, v->w_total, v->w_failed);
+			vmsg(v, MSG_ERR, ngettext("Wrote %d of %d parameter, %d failed", "Wrote %d of %d parameters, %d failed", v->w_total), v->w_ok,
+					v->w_total, v->w_failed);
 		else
-			vmsg(v, MSG_OK, "Wrote %d parameter%s%s", v->w_ok, v->w_ok == 1 ? "" : "s",
-					v->w_reboot_needed ? " - reboot required for changes to take effect" : "");
+			vmsg(v, MSG_OK, ngettext("Wrote %d parameter%s", "Wrote %d parameters%s", v->w_ok), v->w_ok,
+					v->w_reboot_needed ? _(" - reboot required for changes to take effect") : "");
 		v->w_total = 0;
 		ps->revision++;
 	}
@@ -479,7 +482,7 @@ void vehicle_tick(vehicle_t *v, double now) {
 
 	if (!v->hb_lost && !v->reconnecting && now - v->last_hb_rx >= HB_TIMEOUT) {
 		v->hb_lost = true;
-		vmsg(v, MSG_WARN, "No heartbeat from the vehicle");
+		vmsg(v, MSG_WARN, "%s", _("No heartbeat from the vehicle"));
 	}
 	if (now - v->last_hb_tx >= HB_PERIOD) {
 		v->last_hb_tx = now;
@@ -511,36 +514,37 @@ const char *vehicle_fw_name(const vehicle_t *v) {
 	}
 }
 
+/* Returns the untranslated (English) name: wrap in _() for display. */
 const char *vehicle_type_name(uint8_t t) {
 	switch (t) {
 	case MAV_TYPE_FIXED_WING:
-		return "Plane";
+		return N_("Plane");
 	case MAV_TYPE_QUADROTOR:
-		return "Quadrotor";
+		return N_("Quadrotor");
 	case MAV_TYPE_COAXIAL:
-		return "Coaxial";
+		return N_("Coaxial");
 	case MAV_TYPE_HELICOPTER:
-		return "Helicopter";
+		return N_("Helicopter");
 	case MAV_TYPE_ANTENNA_TRACKER:
-		return "Antenna tracker";
+		return N_("Antenna tracker");
 	case MAV_TYPE_AIRSHIP:
-		return "Airship";
+		return N_("Airship");
 	case MAV_TYPE_GROUND_ROVER:
-		return "Rover";
+		return N_("Rover");
 	case MAV_TYPE_SURFACE_BOAT:
-		return "Boat";
+		return N_("Boat");
 	case MAV_TYPE_SUBMARINE:
-		return "Submarine";
+		return N_("Submarine");
 	case MAV_TYPE_HEXAROTOR:
-		return "Hexarotor";
+		return N_("Hexarotor");
 	case MAV_TYPE_OCTOROTOR:
-		return "Octorotor";
+		return N_("Octorotor");
 	case MAV_TYPE_TRICOPTER:
-		return "Tricopter";
+		return N_("Tricopter");
 	case MAV_TYPE_DODECAROTOR:
-		return "Dodecarotor";
+		return N_("Dodecarotor");
 	case MAV_TYPE_DECAROTOR:
-		return "Decarotor";
+		return N_("Decarotor");
 	case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
 	case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
 	case MAV_TYPE_VTOL_TILTROTOR:
@@ -548,9 +552,9 @@ const char *vehicle_type_name(uint8_t t) {
 	case MAV_TYPE_VTOL_TAILSITTER:
 	case MAV_TYPE_VTOL_TILTWING:
 	case MAV_TYPE_VTOL_RESERVED5:
-		return "VTOL";
+		return N_("VTOL");
 	default:
-		return "Vehicle";
+		return N_("Vehicle");
 	}
 }
 

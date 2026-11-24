@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "app.h"
+#include "i18n.h"
 #include "ui.h"
 #include "util.h"
 
@@ -139,9 +140,9 @@ static void commit(app_t *a, double v) {
 	param_format(p, v, after, sizeof after);
 	u->mode = MODE_NORMAL;
 	if (app_set_pending(a, u->edit_param, v))
-		app_msg(a, MSG_INFO, "%s: %s → %s  (w: write to vehicle, z: undo)", p->name, before, after);
+		app_msg(a, MSG_INFO, _("%s: %s → %s  (w: write to vehicle, z: undo)"), p->name, before, after);
 	else if (p->wstate == PW_NONE)
-		app_msg(a, MSG_INFO, "%s unchanged", p->name);
+		app_msg(a, MSG_INFO, _("%s unchanged"), p->name);
 	u->view_stale = true; /* modified-only view may change */
 }
 
@@ -151,12 +152,12 @@ void ui_begin_edit(app_t *a, int pidx) {
 	if (!p->have_value)
 		return;
 	if (p->wstate == PW_SENT || p->wstate == PW_QUEUED) {
-		app_msg(a, MSG_WARN, "%s is being written", p->name);
+		app_msg(a, MSG_WARN, _("%s is being written"), p->name);
 		return;
 	}
 	const param_meta_t *m = p->meta;
 	if (m && m->readonly) {
-		app_msg(a, MSG_WARN, "%s is read-only", p->name);
+		app_msg(a, MSG_WARN, _("%s is read-only"), p->name);
 		return;
 	}
 	u->edit_param  = pidx;
@@ -193,12 +194,12 @@ static void commit_text(app_t *a) {
 	char *end;
 	double v = strtod(s, &end);
 	if (!*s || *end || !isfinite(v)) {
-		snprintf(u->edit_err, sizeof u->edit_err, "not a number");
+		snprintf(u->edit_err, sizeof u->edit_err, "%s", _("not a number"));
 		return;
 	}
 	if (param_type_is_int(p->type)) {
 		if (fabs(v - rint(v)) > 1e-9) {
-			snprintf(u->edit_err, sizeof u->edit_err, "%s needs an integer", param_type_name(p->type));
+			snprintf(u->edit_err, sizeof u->edit_err, _("%s needs an integer"), param_type_name(p->type));
 			return;
 		}
 		v = rint(v);
@@ -209,14 +210,14 @@ static void commit_text(app_t *a) {
 		char a1[32], a2[32];
 		fmt_number(lo, true, a1, sizeof a1);
 		fmt_number(hi, true, a2, sizeof a2);
-		snprintf(u->edit_err, sizeof u->edit_err, "%s range is %s..%s", param_type_name(p->type), a1, a2);
+		snprintf(u->edit_err, sizeof u->edit_err, _("%s range is %s..%s"), param_type_name(p->type), a1, a2);
 		return;
 	}
 	if (m && m->has_range && (v < m->min - 1e-9 || v > m->max + 1e-9) && !u->edit_force) {
 		char a1[32], a2[32];
 		fmt_number(m->min, false, a1, sizeof a1);
 		fmt_number(m->max, false, a2, sizeof a2);
-		snprintf(u->edit_err, sizeof u->edit_err, "outside recommended range %s..%s - Enter again to set anyway", a1, a2);
+		snprintf(u->edit_err, sizeof u->edit_err, _("outside recommended range %s..%s - Enter again to set anyway"), a1, a2);
 		u->edit_force = true;
 		return;
 	}
@@ -384,11 +385,13 @@ void ui_draw_popup(app_t *a) {
 		maxw = MAX(maxw, utf8_width(bits ? m->bits[i].label : m->values[i].label));
 	char title[128];
 	snprintf(title, sizeof title, "%s%s%s", p->name, m->human ? " - " : "", m->human ? m->human : "");
-	const char *foot = bits ? "Space toggle · a all · n none · Enter set · Tab type · Esc" : "Enter select · Tab type a value · Esc cancel";
-	int w			 = MAX(maxw + 22, MAX(utf8_width(title) + 6, utf8_width(foot) + 4));
-	w				 = MIN(w, (int)u->cols - 4);
-	int h			 = MIN(count + 4, (int)u->rows - 4);
-	h				 = MAX(h, 5);
+	/* TRANSLATORS: key names (Space, a, n, Enter, Tab, Esc) must stay as they are */
+	const char *foot =
+			bits ? _("Space toggle · a all · n none · Enter set · Tab type · Esc") : _("Enter select · Tab type a value · Esc cancel");
+	int w  = MAX(maxw + 22, MAX(utf8_width(title) + 6, utf8_width(foot) + 4));
+	w	   = MIN(w, (int)u->cols - 4);
+	int h  = MIN(count + 4, (int)u->rows - 4);
+	h	   = MAX(h, 5);
 	int y0 = ((int)u->rows - h) / 2, x0 = ((int)u->cols - w) / 2;
 	u->popup_y0	   = y0;
 	u->popup_x0	   = x0;
@@ -420,7 +423,7 @@ void ui_draw_popup(app_t *a) {
 			char code[32];
 			fmt_number(m->values[i].code, false, code, sizeof code);
 			bool is_cur = fabs(m->values[i].code - vehicle_v) < 1e-6;
-			snprintf(line, sizeof line, " %s %6s  %s%s", sel ? "▶" : " ", code, m->values[i].label, is_cur ? "   ← current" : "");
+			snprintf(line, sizeof line, " %s %6s  %s%s", sel ? "▶" : " ", code, m->values[i].label, is_cur ? _("   ← current") : "");
 			if (is_cur)
 				ui_rgb_fg(n, C_OK);
 		}
@@ -431,7 +434,7 @@ void ui_draw_popup(app_t *a) {
 	ui_rgb_fg(n, C_DIM);
 	char f[256];
 	if (bits)
-		snprintf(f, sizeof f, " value = %llu   %s", (unsigned long long)u->bits, foot);
+		snprintf(f, sizeof f, _(" value = %llu   %s"), (unsigned long long)u->bits, foot);
 	else
 		snprintf(f, sizeof f, " %s", foot);
 	ui_put(n, y0 + h - 2, x0 + 1, w - 2, f);

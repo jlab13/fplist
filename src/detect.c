@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "i18n.h"
 #include "util.h"
 
 /* ------------------------------------------------------------------------ */
@@ -172,7 +173,7 @@ static detect_cand_t *cand_add(detector_t *d, cand_kind_t kind, const link_spec_
 		c->first_seen = now;
 		c->next_try	  = now;
 		xstrlcpy(c->label, label, sizeof c->label);
-		xstrlcpy(c->status, "waiting", sizeof c->status);
+		xstrlcpy(c->status, _("waiting"), sizeof c->status);
 		return c;
 	}
 	return NULL;
@@ -199,7 +200,7 @@ void detector_init(detector_t *d, const detect_opts_t *opt) {
 		link_spec_t s = {.kind = LINK_UDP_IN, .port = opt->udp_port};
 		xstrlcpy(s.host, "0.0.0.0", sizeof s.host);
 		char label[64];
-		snprintf(label, sizeof label, "UDP listen :%d", opt->udp_port);
+		snprintf(label, sizeof label, _("UDP listen :%d"), opt->udp_port);
 		cand_add(d, CAND_UDP, &s, label, now);
 	}
 	if (opt->tcp) {
@@ -256,7 +257,7 @@ static void scan_serial(detector_t *d, double now) {
 			c->skip = bl;
 			if (bl) {
 				link_close(&c->link);
-				xstrlcpy(c->status, "bootloader - waiting for firmware to start", sizeof c->status);
+				xstrlcpy(c->status, _("bootloader - waiting for firmware to start"), sizeof c->status);
 			} else {
 				c->next_try = now + 1.0;
 			}
@@ -271,13 +272,13 @@ static void scan_serial(detector_t *d, double now) {
 
 static void permission_hint(const char *dev, char *out, size_t n) {
 	struct stat st;
-	const char *grp = "the device's";
+	const char *grp = "?";
 	if (stat(dev, &st) == 0) {
 		struct group *g = getgrgid(st.st_gid);
 		if (g)
 			grp = g->gr_name;
 	}
-	snprintf(out, n, "permission denied - add yourself to group '%s'", grp);
+	snprintf(out, n, _("permission denied - add yourself to group '%s'"), grp);
 }
 
 static void try_open(detector_t *d, detect_cand_t *c, double now) {
@@ -285,11 +286,11 @@ static void try_open(detector_t *d, detect_cand_t *c, double now) {
 		c->opened_at = now;
 		c->msgs_seen = 0;
 		if (c->link.connecting)
-			xstrlcpy(c->status, "connecting...", sizeof c->status);
+			xstrlcpy(c->status, _("connecting..."), sizeof c->status);
 		else if (c->spec.kind == LINK_UDP_IN)
-			xstrlcpy(c->status, "listening, waiting for heartbeat", sizeof c->status);
+			xstrlcpy(c->status, _("listening, waiting for heartbeat"), sizeof c->status);
 		else
-			snprintf(c->status, sizeof c->status, "open @%d, waiting for heartbeat", c->spec.baud);
+			snprintf(c->status, sizeof c->status, _("open @%d, waiting for heartbeat"), c->spec.baud);
 		LOG("detect: opened %s", c->link.name);
 		return;
 	}
@@ -315,14 +316,14 @@ static void on_msg(void *ctx, link_t *l, const mavlink_message_t *msg) {
 		return;
 	if (!heartbeat_is_vehicle(msg, d->opt.gcs_sysid)) {
 		if (c->msgs_seen == 1)
-			xstrlcpy(c->status, "MAVLink traffic, no autopilot heartbeat yet", sizeof c->status);
+			xstrlcpy(c->status, _("MAVLink traffic, no autopilot heartbeat yet"), sizeof c->status);
 		return;
 	}
 	if (d->opt.target_sysid >= 0 && msg->sysid != (uint32_t)d->opt.target_sysid)
 		return;
 	d->winner	 = idx;
 	d->winner_hb = *msg;
-	snprintf(c->status, sizeof c->status, "vehicle found (sysid %u)", msg->sysid);
+	snprintf(c->status, sizeof c->status, _("vehicle found (sysid %u)"), msg->sysid);
 	LOG("detect: vehicle heartbeat on %s sysid=%u compid=%u", l->name, msg->sysid, msg->compid);
 }
 
@@ -353,7 +354,7 @@ void detector_service(detector_t *d, int cand, short revents) {
 		return;
 	}
 	if (was_connecting && !c->link.connecting)
-		xstrlcpy(c->status, "connected, waiting for heartbeat", sizeof c->status);
+		xstrlcpy(c->status, _("connected, waiting for heartbeat"), sizeof c->status);
 }
 
 static void send_heartbeat(detector_t *d, link_t *l) {

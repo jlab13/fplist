@@ -7,11 +7,18 @@
 #include <string.h>
 
 #include "app.h"
+#include "i18n.h"
 #include "ui.h"
 #include "util.h"
 
 enum { COL_NAME, COL_VALUE, COL_UNITS, COL_OPTIONS, COL_DESC, COL_FAV, NCOLS };
-static const char *col_titles[NCOLS] = {"Command", "Value", "Units", "Options", "Desc", "Fav"};
+/* Parameter categories that come from metadata (ArduPilot "user", PX4
+ * "category"); listed here only so xgettext extracts them. */
+static const char *const meta_categories[]
+		__attribute__((unused)) = {N_("Standard"), N_("Advanced"), N_("User"), N_("Developer"), N_("System")};
+
+/* TRANSLATORS: table column titles. Widths: Command 14, Value 12, Units 8, Fav 3 columns. */
+static const char *col_titles[NCOLS] = {N_("Command"), N_("Value"), N_("Units"), N_("Options"), N_("Desc"), N_("Fav")};
 
 #define DETAILS_H 6 /* heading + 5 lines */
 #define MAX_WRAP 64
@@ -224,7 +231,7 @@ static void draw_header(app_t *a, int y) {
 	for (int c = 0; c < NCOLS; c++) {
 		if (u->col_w[c] <= 0)
 			continue;
-		const char *t = col_titles[c];
+		const char *t = _(col_titles[c]);
 		char buf[64];
 		if (c == COL_NAME) {
 			snprintf(buf, sizeof buf, "%s ▲", t);
@@ -339,7 +346,7 @@ static void bits_text(const param_meta_t *m, uint64_t bits, char *out, size_t n)
 			len = sappendf(out, n, len, "%s%s", len ? " | " : "", m->bits[i].label);
 	}
 	if (!len)
-		snprintf(out, n, "(none)");
+		snprintf(out, n, "%s", _("(none)"));
 }
 
 static void describe_value(const param_t *p, double v, char *out, size_t n) {
@@ -387,24 +394,24 @@ static void draw_details(app_t *a, int y0) {
 		char lo[32], hi[32];
 		fmt_number(m->min, false, lo, sizeof lo);
 		fmt_number(m->max, false, hi, sizeof hi);
-		al = sappendf(attrs, sizeof attrs, al, " · range %s..%s", lo, hi);
+		al = sappendf(attrs, sizeof attrs, al, _(" · range %s..%s"), lo, hi);
 	}
 	if (m && m->has_increment) {
 		char inc[32];
 		fmt_number(m->increment, false, inc, sizeof inc);
-		al = sappendf(attrs, sizeof attrs, al, " · step %s", inc);
+		al = sappendf(attrs, sizeof attrs, al, _(" · step %s"), inc);
 	}
 	if (m && m->has_default) {
 		char d[32];
 		fmt_number(m->def, param_type_is_int(p->type), d, sizeof d);
-		al = sappendf(attrs, sizeof attrs, al, " · default %s", d);
+		al = sappendf(attrs, sizeof attrs, al, _(" · default %s"), d);
 	}
 	if (m && m->user && *m->user)
-		al = sappendf(attrs, sizeof attrs, al, " · %s", m->user);
+		al = sappendf(attrs, sizeof attrs, al, " · %s", _(m->user));
 	if (m && m->reboot_required)
-		al = sappendf(attrs, sizeof attrs, al, " · reboot required");
+		al = sappendf(attrs, sizeof attrs, al, "%s", _(" · reboot required"));
 	if (m && m->readonly)
-		al = sappendf(attrs, sizeof attrs, al, " · read-only");
+		al = sappendf(attrs, sizeof attrs, al, "%s", _(" · read-only"));
 	if (p->index >= 0)
 		sappendf(attrs, sizeof attrs, al, " · #%d ", p->index);
 	int aw = utf8_width(attrs);
@@ -424,13 +431,13 @@ static void draw_details(app_t *a, int y0) {
 	if (p->pending) {
 		char pend[512];
 		describe_value(p, p->pending_value, pend, sizeof pend);
-		snprintf(line, sizeof line, " Vehicle: %s   →   new: %s%s", cur, pend,
-				p->wstate == PW_SENT	 ? "  (writing...)"
-				: p->wstate == PW_FAILED ? "  (write FAILED)"
-										 : "  (not written - press w)");
+		snprintf(line, sizeof line, _(" Vehicle: %s   →   new: %s%s"), cur, pend,
+				p->wstate == PW_SENT	 ? _("  (writing...)")
+				: p->wstate == PW_FAILED ? _("  (write FAILED)")
+										 : _("  (not written - press w)"));
 		ui_rgb_fg(n, p->wstate == PW_FAILED ? C_FAIL : C_PENDING);
 	} else {
-		snprintf(line, sizeof line, " Value: %s", cur);
+		snprintf(line, sizeof line, _(" Value: %s"), cur);
 	}
 	ui_put(n, y++, 0, W, line);
 	ncplane_set_fg_default(n);
@@ -450,7 +457,7 @@ static void draw_details(app_t *a, int y0) {
 		ui_putn(n, y++, 1, W - 2, opts + ol[i].off, ol[i].len);
 	if (!m) {
 		ui_rgb_fg(n, C_DIM);
-		ui_put(n, y, 1, W - 2, a->meta_finished ? "(no metadata for this parameter)" : "(metadata loading...)");
+		ui_put(n, y, 1, W - 2, a->meta_finished ? _("(no metadata for this parameter)") : _("(metadata loading...)"));
 	}
 	ui_default_colors(n);
 }
@@ -490,11 +497,11 @@ void ui_draw_table(app_t *a) {
 		const char *t;
 		char buf[200];
 		if (a->ps.n == 0)
-			t = a->veh.pdl == PDL_FAILED ? "No parameters received." : "Downloading parameters...";
+			t = a->veh.pdl == PDL_FAILED ? _("No parameters received.") : _("Downloading parameters...");
 		else if (u->modified_only)
-			t = "No modified parameters (m: show all).";
+			t = _("No modified parameters (m: show all).");
 		else {
-			snprintf(buf, sizeof buf, "No parameters match \"%s\" (Esc clears the search).", u->search.buf);
+			snprintf(buf, sizeof buf, _("No parameters match \"%s\" (Esc clears the search)."), u->search.buf);
 			t = buf;
 		}
 		ui_put(n, y0 + 1, 2, (int)u->cols - 4, t);

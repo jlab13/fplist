@@ -9,6 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "i18n.h"
 #include "util.h"
 
 #define APM_BASE "https://autotest.ardupilot.org/Parameters"
@@ -93,7 +94,7 @@ static void *worker(void *arg) {
 
 	char cache[900];
 	if (!path_cache_dir(cache, sizeof cache)) {
-		snprintf(mf->msg, sizeof mf->msg, "metadata: no cache directory (HOME unset?)");
+		snprintf(mf->msg, sizeof mf->msg, "%s", _("metadata: no cache directory (HOME unset?)"));
 		atomic_store(&mf->done, 1);
 		return NULL;
 	}
@@ -124,14 +125,14 @@ static void *worker(void *arg) {
 		struct stat st;
 		bool cached		= stat(s->file, &st) == 0 && st.st_size > 0;
 		bool fresh		= cached && (s->immutable || time(NULL) - st.st_mtime < MAX_AGE_S);
-		const char *how = "cached";
+		const char *how = _("cached");
 		if (!fresh && !r->offline) {
 			if (download(s->url, s->file, err, sizeof err)) {
-				how	   = "downloaded";
+				how	   = _("downloaded");
 				cached = true;
 			} else {
 				LOG("metadata: download %s failed: %s", s->url, err);
-				how = "stale cache";
+				how = _("stale cache");
 			}
 		}
 		if (!cached)
@@ -139,12 +140,12 @@ static void *worker(void *arg) {
 		mf->result = try_load(s->file, err, sizeof err);
 		if (mf->result) {
 			snprintf(mf->result->source, sizeof mf->result->source, "%s", s->label);
-			snprintf(mf->msg, sizeof mf->msg, "metadata: %s, %d params (%s)", s->label, mf->result->n, how);
+			snprintf(mf->msg, sizeof mf->msg, _("metadata: %s, %d params (%s)"), s->label, mf->result->n, how);
 		}
 	}
 	if (!mf->result)
-		snprintf(mf->msg, sizeof mf->msg, "metadata unavailable: %s",
-				err[0] ? err : (r->offline ? "offline and nothing cached" : "unknown error"));
+		snprintf(mf->msg, sizeof mf->msg, _("metadata unavailable: %s"),
+				err[0] ? err : (r->offline ? _("offline and nothing cached") : _("unknown error")));
 	atomic_store(&mf->done, 1);
 	return NULL;
 }
@@ -154,7 +155,7 @@ bool metafetch_start(metafetch_t *mf, const metafetch_req_t *req) {
 	mf->req = *req;
 	atomic_store(&g_cancel, 0);
 	if (pthread_create(&mf->th, NULL, worker, mf) != 0) {
-		snprintf(mf->msg, sizeof mf->msg, "metadata: cannot start thread");
+		snprintf(mf->msg, sizeof mf->msg, "%s", _("metadata: cannot start thread"));
 		return false;
 	}
 	mf->started = true;

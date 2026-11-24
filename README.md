@@ -106,6 +106,27 @@ Read-only параметри не редагуються.
 QGroundControl (`sysid compid NAME VALUE TYPE`). Завантажені значення стають незаписаними змінами;
 щоб відправити їх в апарат, натисніть `w`.
 
+## Локалізація
+
+Використовується GNU gettext (libintl входить у glibc). Мова береться з `LANG` / `LC_MESSAGES`:
+
+```sh
+LANG=uk_UA.UTF-8 ./build/gndtui   # українською
+LANG=C ./build/gndtui             # англійською
+```
+
+- `po/LINGUAS`: список мов, `po/<мова>.po`: переклади, `po/gndtui.pot`: шаблон.
+- Збірка компілює `.mo` у `build/locale/`, тож з каталогу збірки переклад працює без встановлення.
+  `make install` ставить їх у `share/locale`. Каталог можна перевизначити змінною `GNDTUI_LOCALEDIR`.
+- Після зміни рядків у коді виконайте `cmake --build build --target pot`. Ця ціль оновить шаблон і зіллє нові
+  рядки в усі `.po`. Перекладати зручно в Poedit або Weblate.
+- Нова мова: `msginit -i po/gndtui.pot -l <мова> -o po/<мова>.po`, потім додайте мову в `po/LINGUAS`.
+- У коді: `_("…")` перекладає рядок, `N_("…")` позначає рядки в статичних таблицях, а для множини є `ngettext()`.
+  Пастка: `_("")` повертає заголовок каталогу, тому порожні рядки не перекладаємо.
+- Не перекладаються: назви клавіш, debug-лог, заголовок TSV у `--dump`, описи параметрів з метаданих
+  (ArduPilot і PX4 публікують їх лише англійською).
+- Без gettext: `-DGNDTUI_NLS=OFF`.
+
 ## Тестування без заліза
 
 `build/fakevehicle` — мінімальний апарат: HEARTBEAT, AUTOPILOT_VERSION, протокол параметрів.
@@ -132,6 +153,8 @@ src/metafetch.c   фонове завантаження і кешування м
 src/paramfile.c   файли параметрів MP/QGC
 src/favs.c        обране
 src/ui*.c         notcurses UI: таблиця, редактори, діалоги
+src/i18n.c        gettext: пошук каталогів перекладів
+po/               переклади (gettext)
 tools/fakevehicle.c
 ```
 
@@ -144,3 +167,8 @@ tools/fakevehicle.c
 - Серійні порти перебираються лише в Linux (sysfs); сам код транспорту POSIX.
 - notcurses чекає відповіді терміналу на запит DA1, тому всередині *detached* tmux без клієнта не стартує.
   У звичайному терміналі та в tmux із підключеним клієнтом працює.
+
+## Ліцензія
+
+[MIT](LICENSE). Залежності мають власні ліцензії: notcurses (Apache-2.0), MAVLink c_library_v2 (MIT),
+cJSON (MIT), expat (MIT), libcurl (curl license).

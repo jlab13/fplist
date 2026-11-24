@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "app.h"
+#include "i18n.h"
 #include "util.h"
 
 #define MSG_SHOW_S 10.0
@@ -134,7 +135,7 @@ static void draw_title(app_t *a) {
 	if (a->phase == PHASE_DETECT) {
 		static const char *spin[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
 		int k					  = (int)(now_s() * 10) % 10;
-		snprintf(left, sizeof left, " gndtui  │  searching for vehicle %s", spin[k]);
+		snprintf(left, sizeof left, " gndtui  │  %s %s", _("searching for vehicle"), spin[k]);
 		right[0] = '\0';
 	} else {
 		vehicle_t *v = &a->veh;
@@ -148,18 +149,18 @@ static void draw_title(app_t *a) {
 			int filled	 = pct / 10;
 			for (int i = 0; i < 10; i++)
 				strcat(bar, i < filled ? "█" : "░");
-			snprintf(prog, sizeof prog, "Params %d/%d %s", ps->got_count, ps->expected, bar);
+			snprintf(prog, sizeof prog, _("Params %d/%d %s"), ps->got_count, ps->expected, bar);
 		} else if (v->pdl == PDL_LISTING) {
-			snprintf(prog, sizeof prog, "Requesting params...");
+			snprintf(prog, sizeof prog, "%s", _("Requesting params..."));
 		} else {
-			snprintf(prog, sizeof prog, "Params %d", ps->n);
+			snprintf(prog, sizeof prog, _("Params %d"), ps->n);
 		}
 		int pend		= ps_pending_count(ps);
 		char pend_s[48] = "";
 		if (pend)
-			snprintf(pend_s, sizeof pend_s, "  │  %d modified", pend);
-		snprintf(left, sizeof left, " gndtui  │  %s %s %s  │  sys %u  │  %s  │  %s%s", vehicle_fw_name(v), vehicle_type_name(v->mav_type),
-				ver, v->sysid, v->link.name, prog, pend_s);
+			snprintf(pend_s, sizeof pend_s, ngettext("  │  %d modified", "  │  %d modified", pend), pend);
+		snprintf(left, sizeof left, " gndtui  │  %s %s %s  │  sys %u  │  %s  │  %s%s", vehicle_fw_name(v),
+				_(vehicle_type_name(v->mav_type)), ver, v->sysid, v->link.name, prog, pend_s);
 		snprintf(right, sizeof right, "%s", a->meta_status);
 	}
 	/* Right side: link indicator always, metadata source when it fits. */
@@ -167,7 +168,7 @@ static void draw_title(app_t *a) {
 	bool alive		= false;
 	if (a->phase == PHASE_VEHICLE) {
 		alive = vehicle_alive(&a->veh, now_s());
-		ind	  = alive ? " ● LINK " : " ○ NO LINK ";
+		ind	  = alive ? _(" ● LINK ") : _(" ○ NO LINK ");
 	}
 	int indw  = ind ? utf8_width(ind) : 0;
 	int lw	  = utf8_width(left);
@@ -241,14 +242,16 @@ static void draw_status(app_t *a, int *cursor_y, int *cursor_x) {
 	switch (u->mode) {
 	case MODE_SEARCH: {
 		ncplane_set_styles(n, NCSTYLE_BOLD);
-		ui_put(n, y, 0, 9, " Search: ");
+		const char *lab = _(" Search: ");
+		int lw			= utf8_width(lab);
+		ui_put(n, y, 0, lw, lab);
 		ncplane_set_styles(n, NCSTYLE_NONE);
-		const char *hint = "  Enter: keep  Esc: clear";
+		const char *hint = _("  Enter: keep  Esc: clear");
 		int hw			 = utf8_width(hint);
 		*cursor_y		 = y;
-		*cursor_x		 = draw_lineedit(n, y, 9, MAX(avail - 9 - hw, 4), &u->search);
+		*cursor_x		 = draw_lineedit(n, y, lw, MAX(avail - lw - hw, 4), &u->search);
 		ui_rgb_fg(n, C_DIM);
-		if (avail - hw > 13)
+		if (avail - hw > lw + 4)
 			ui_put(n, y, avail - hw, hw, hint);
 		break;
 	}
@@ -277,31 +280,35 @@ static void draw_status(app_t *a, int *cursor_y, int *cursor_x) {
 				char lo[32], hi[32];
 				fmt_number(m->min, false, lo, sizeof lo);
 				fmt_number(m->max, false, hi, sizeof hi);
-				snprintf(rng, sizeof rng, "range %s..%s%s%s  ", lo, hi, m->units ? " " : "", m->units ? m->units : "");
+				snprintf(rng, sizeof rng, _("range %s..%s%s%s  "), lo, hi, m->units ? " " : "", m->units ? m->units : "");
 			}
-			snprintf(hint, sizeof hint, "  %s%sEnter: set  Esc: cancel%s", rng, param_type_is_int(p->type) ? "" : "",
-					m && (m->nvalues || m->nbits) ? "  Tab: list" : "");
+			snprintf(hint, sizeof hint, "  %s%s%s", rng, _("Enter: set  Esc: cancel"),
+					m && (m->nvalues || m->nbits) ? _("  Tab: list") : "");
 		}
 		ui_put(n, y, lw + ew, MAX(avail - lw - ew, 0), hint);
 		break;
 	}
 	case MODE_PROMPT: {
-		const char *lab = u->prompt_kind == PROMPT_SAVE ? " Save to: " : " Load from: ";
+		const char *lab = u->prompt_kind == PROMPT_SAVE ? _(" Save to: ") : _(" Load from: ");
 		int lw			= utf8_width(lab);
 		ncplane_set_styles(n, NCSTYLE_BOLD);
 		ui_put(n, y, 0, lw, lab);
 		ncplane_set_styles(n, NCSTYLE_NONE);
-		*cursor_y = y;
-		*cursor_x = draw_lineedit(n, y, lw, MAX(avail - lw - 26, 8), &u->prompt);
+		const char *hint = _("  Enter: ok  Esc: cancel");
+		int hw			 = utf8_width(hint);
+		*cursor_y		 = y;
+		*cursor_x		 = draw_lineedit(n, y, lw, MAX(avail - lw - hw, 8), &u->prompt);
 		ui_rgb_fg(n, C_DIM);
-		ui_put(n, y, avail - 26, 26, "  Enter: ok  Esc: cancel");
+		if (avail - hw > lw + 8)
+			ui_put(n, y, avail - hw, hw, hint);
 		break;
 	}
 	case MODE_CONFIRM: {
 		ui_rgb_fg(n, C_WARN);
 		ncplane_set_styles(n, NCSTYLE_BOLD);
 		char t[256];
-		snprintf(t, sizeof t, " %s  [y/n]", u->confirm_text);
+		/* TRANSLATORS: the answer keys stay y / n */
+		snprintf(t, sizeof t, _(" %s  [y/n]"), u->confirm_text);
 		ui_put(n, y, 0, avail, t);
 		ncplane_set_styles(n, NCSTYLE_NONE);
 		break;
@@ -314,11 +321,12 @@ static void draw_status(app_t *a, int *cursor_y, int *cursor_x) {
 			snprintf(t, sizeof t, " %s", a->msg);
 			ui_put(n, y, 0, avail, t);
 		} else if (a->phase == PHASE_DETECT) {
-			ui_put(n, y, 0, avail, " q: quit");
+			ui_put(n, y, 0, avail, _(" q: quit"));
 		} else {
+			/* TRANSLATORS: key names (Enter, /, w, r, ...) must stay as they are */
 			ui_put(n, y, 0, avail,
-					" ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  "
-					"s save  l load  v wrap  d details  ? help  q quit");
+					_(" ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  "
+					  "s save  l load  v wrap  d details  ? help  q quit"));
 		}
 		break;
 	}
@@ -341,15 +349,15 @@ static void draw_detect(app_t *a) {
 
 	int y = 2;
 	ncplane_set_styles(n, NCSTYLE_BOLD);
-	ui_put(n, y++, 2, W - 4, d->opt.forced ? "Connecting:" : "Looking for a vehicle on these connections:");
+	ui_put(n, y++, 2, W - 4, d->opt.forced ? _("Connecting:") : _("Looking for a vehicle on these connections:"));
 	ncplane_set_styles(n, NCSTYLE_NONE);
 	y++;
 	int lw = MIN(60, W / 2);
 	ui_rgb_bg(n, C_HDR_BG);
 	ui_rgb_fg(n, C_HDR_FG);
 	ui_fill(n, y, 2, W - 4);
-	ui_put(n, y, 3, lw - 1, "Connection");
-	ui_put(n, y, 2 + lw, W - 4 - lw, "Status");
+	ui_put(n, y, 3, lw - 1, _("Connection"));
+	ui_put(n, y, 2 + lw, W - 4 - lw, _("Status"));
 	ui_default_colors(n);
 	y++;
 	int shown = 0;
@@ -360,14 +368,14 @@ static void draw_detect(app_t *a) {
 		shown++;
 		ui_put(n, y, 3, lw - 1, c->label);
 		bool open = link_is_open(&c->link) && !c->link.connecting;
-		bool bad  = !link_is_open(&c->link) && !c->skip && strcmp(c->status, "waiting") != 0;
+		bool bad  = !link_is_open(&c->link) && !c->skip && strcmp(c->status, _("waiting")) != 0;
 		ui_rgb_fg(n, bad ? C_ERR : open ? C_OK : C_DIM);
 		char st[260];
-		snprintf(st, sizeof st, "%s%s", c->status, c->msgs_seen ? "" : "");
+		snprintf(st, sizeof st, "%s", c->status);
 		ui_put(n, y, 2 + lw, W - 4 - lw, st);
 		if (open && c->link.rx_msgs) {
 			char cnt[48];
-			snprintf(cnt, sizeof cnt, " %llu msgs", (unsigned long long)c->link.rx_msgs);
+			snprintf(cnt, sizeof cnt, _(" %llu msgs"), (unsigned long long)c->link.rx_msgs);
 			int cw = utf8_width(cnt);
 			if (W - 4 - lw > cw + utf8_width(st) + 2) {
 				ui_rgb_fg(n, C_DIM);
@@ -379,20 +387,20 @@ static void draw_detect(app_t *a) {
 	}
 	if (!shown) {
 		ui_rgb_fg(n, C_DIM);
-		ui_put(n, y++, 3, W - 6, "(no candidate ports yet - plug in a flight controller)");
+		ui_put(n, y++, 3, W - 6, _("(no candidate ports yet - plug in a flight controller)"));
 		ui_default_colors(n);
 	}
 
 	static const char *hints[] = {
-			"Auto-detect (like QGroundControl): USB flight controllers & SiK radios,",
-			"UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL).",
-			"Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui tcp:host:5760",
+			N_("Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"),
+			N_("UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."),
+			N_("Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui tcp:host:5760"),
 	};
 	int hy = H - 2 - (int)ARRAY_LEN(hints);
 	ui_rgb_fg(n, C_DIM);
 	for (size_t i = 0; i < ARRAY_LEN(hints); i++)
 		if (hy + (int)i > y)
-			ui_put(n, hy + (int)i, 2, W - 4, hints[i]);
+			ui_put(n, hy + (int)i, 2, W - 4, _(hints[i]));
 	ui_default_colors(n);
 }
 
@@ -400,47 +408,63 @@ static void draw_detect(app_t *a) {
 /* help                                                                       */
 
 static void draw_help(app_t *a) {
-	static const char *lines[] = {
-			"Navigation",
-			"  ↑ ↓ / j k         move            PgUp PgDn   page",
-			"  Home End / g G    first / last     mouse       click, wheel",
-			"Editing",
-			"  Enter / e         edit value (list / bitmask editor if known)",
-			"  z / Z             undo edit of this / all parameters",
-			"  w                 write modified parameters to the vehicle",
-			"  r                 refresh (re-download) all parameters",
-			"View",
-			"  /                 search name & description   Esc clears",
-			"  m                 show only modified parameters",
-			"  f / Space         toggle favourite (favourites sort first)",
-			"  v                 wrap rows (Mission Planner style)",
-			"  d                 toggle the details pane",
-			"Files",
-			"  s                 save parameters (Mission Planner .param)",
-			"  l                 load parameters from file (become edits)",
-			"",
-			"  q / Ctrl-C        quit",
+	/* keys: NULL = section heading; "" = blank line. Keys are not translated. */
+	static const struct {
+		const char *keys;
+		const char *text;
+		bool tkey; /* key label is a word that needs translating */
+	} lines[] = {
+			{NULL,			  N_("Navigation"),									 false},
+			{"↑ ↓  j k",	  N_("move"),										 false},
+			{"PgUp PgDn",	  N_("page"),										 false},
+			{"Home End  g G", N_("first / last"),								 false},
+			{N_("mouse"),	  N_("click, wheel, double click to edit"),			 true },
+			{NULL,			  N_("Editing"),									 false},
+			{"Enter  e",	  N_("edit value (list / bitmask editor if known)"), false},
+			{"z  Z",		  N_("undo edit of this / all parameters"),			 false},
+			{"w",			  N_("write modified parameters to the vehicle"),	 false},
+			{"r",			  N_("refresh (re-download) all parameters"),		 false},
+			{NULL,			  N_("View"),										 false},
+			{"/",			  N_("search name & description, Esc clears"),		 false},
+			{"m",			  N_("show only modified parameters"),				 false},
+			{"f  Space",	  N_("toggle favourite (favourites sort first)"),	 false},
+			{"v",			  N_("wrap rows (Mission Planner style)"),			 false},
+			{"d",			  N_("toggle the details pane"),					 false},
+			{NULL,			  N_("Files"),										 false},
+			{"s",			  N_("save parameters (Mission Planner .param)"),	 false},
+			{"l",			  N_("load parameters from file (become edits)"),	 false},
+			{"",			  "",												 false},
+			{"q  Ctrl-C",	  N_("quit"),										 false},
 	};
+	enum { KEYW = 16 };
 	ui_t *u = &a->ui;
 	int w	= 0;
 	for (size_t i = 0; i < ARRAY_LEN(lines); i++)
-		w = MAX(w, utf8_width(lines[i]));
+		/* never _(""): gettext returns the catalog header for an empty msgid */
+		w = MAX(w, (lines[i].keys ? KEYW + 2 : 0) + (lines[i].text[0] ? utf8_width(_(lines[i].text)) : 0));
+	char title[96];
+	snprintf(title, sizeof title, _("gndtui %s - keys"), GNDTUI_VERSION);
+	w	   = MAX(w, utf8_width(title) + 4);
 	w	   = MIN(w + 6, (int)u->cols - 2);
 	int h  = MIN((int)ARRAY_LEN(lines) + 4, (int)u->rows - 2);
 	int y0 = ((int)u->rows - h) / 2, x0 = ((int)u->cols - w) / 2;
-	ui_box(u->std, y0, x0, h, w, "gndtui " GNDTUI_VERSION " - keys");
+	ui_box(u->std, y0, x0, h, w, title);
 	struct ncplane *n = u->std;
 	ui_rgb_bg(n, C_POPUP_BG);
 	for (int i = 0; i < (int)ARRAY_LEN(lines) && i < h - 4; i++) {
-		bool head = lines[i][0] && lines[i][0] != ' ';
-		if (head) {
+		int y = y0 + 2 + i;
+		if (!lines[i].keys) {
 			ui_rgb_fg(n, C_ACCENT);
 			ncplane_set_styles(n, NCSTYLE_BOLD);
-		} else {
-			ncplane_set_fg_default(n);
+			ui_put(n, y, x0 + 3, w - 6, _(lines[i].text));
+			ncplane_set_styles(n, NCSTYLE_NONE);
+			continue;
 		}
-		ui_put(n, y0 + 2 + i, x0 + 3, w - 6, lines[i]);
-		ncplane_set_styles(n, NCSTYLE_NONE);
+		ui_rgb_fg(n, C_PENDING);
+		const char *keys = lines[i].tkey ? _(lines[i].keys) : lines[i].keys;
+		ui_put(n, y, x0 + 5, KEYW, keys);
+		ncplane_set_fg_default(n);
+		ui_put(n, y, x0 + 5 + KEYW, w - 8 - KEYW, lines[i].text[0] ? _(lines[i].text) : "");
 	}
 	ui_default_colors(n);
 }
@@ -455,7 +479,7 @@ static void render(app_t *a) {
 	ui_default_colors(n);
 	ncplane_erase(n);
 	if (u->rows < 6 || u->cols < 30) {
-		ui_put(n, 0, 0, (int)u->cols, "terminal too small");
+		ui_put(n, 0, 0, (int)u->cols, _("terminal too small"));
 		notcurses_render(u->nc);
 		return;
 	}
@@ -540,7 +564,10 @@ static void request_quit(app_t *a) {
 	int pend = a->phase == PHASE_VEHICLE ? ps_pending_count(&a->ps) : 0;
 	if (pend) {
 		char t[128];
-		snprintf(t, sizeof t, "%d parameter edit%s not written to the vehicle. Quit anyway?", pend, pend == 1 ? "" : "s");
+		snprintf(t, sizeof t,
+				ngettext("%d parameter edit not written to the vehicle. Quit anyway?",
+						"%d parameter edits not written to the vehicle. Quit anyway?", pend),
+				pend);
 		confirm(a, CONFIRM_QUIT, t);
 	} else {
 		a->quit = true;
@@ -674,7 +701,7 @@ static void normal_key(app_t *a, uint32_t k) {
 	case 'm':
 		u->modified_only = !u->modified_only;
 		u->view_stale	 = true;
-		app_msg(a, MSG_INFO, u->modified_only ? "Showing modified parameters only (m: all)" : "Showing all parameters");
+		app_msg(a, MSG_INFO, "%s", u->modified_only ? _("Showing modified parameters only (m: all)") : _("Showing all parameters"));
 		break;
 	case 'w':
 	case 'W':
@@ -687,12 +714,12 @@ static void normal_key(app_t *a, uint32_t k) {
 	case 'z':
 		if (sel_param >= 0 && a->ps.v[sel_param].pending) {
 			app_clear_pending(a, sel_param);
-			app_msg(a, MSG_INFO, "Reverted %s", a->ps.v[sel_param].name);
+			app_msg(a, MSG_INFO, _("Reverted %s"), a->ps.v[sel_param].name);
 		}
 		break;
 	case 'Z':
 		if (ps_pending_count(&a->ps))
-			confirm(a, CONFIRM_UNDO_ALL, "Discard all parameter edits?");
+			confirm(a, CONFIRM_UNDO_ALL, _("Discard all parameter edits?"));
 		break;
 	case 'v':
 		u->wrap = !u->wrap;
@@ -772,7 +799,7 @@ static void confirm_key(app_t *a, uint32_t k) {
 		break;
 	case CONFIRM_UNDO_ALL: {
 		int n = app_clear_all_pending(a);
-		app_msg(a, MSG_INFO, "Discarded %d edit%s", n, n == 1 ? "" : "s");
+		app_msg(a, MSG_INFO, ngettext("Discarded %d edit", "Discarded %d edits", n), n);
 		u->view_stale = true;
 		break;
 	}

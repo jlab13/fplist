@@ -10,6 +10,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "i18n.h"
 #include "paramfile.h"
 
 #define META_WAIT_VERSION 3.0 /* wait this long for AUTOPILOT_VERSION */
@@ -44,7 +45,7 @@ static bool values_same(const param_t *p, double a, double b) {
 bool app_set_pending(app_t *a, int idx, double v) {
 	param_t *p = &a->ps.v[idx];
 	if (p->wstate == PW_SENT || p->wstate == PW_QUEUED) {
-		app_msg(a, MSG_WARN, "%s is being written, try again in a moment", p->name);
+		app_msg(a, MSG_WARN, _("%s is being written, try again in a moment"), p->name);
 		return false;
 	}
 	a->ps.revision++;
@@ -83,25 +84,25 @@ void app_write(app_t *a) {
 	if (a->phase != PHASE_VEHICLE)
 		return;
 	if (!a->veh.link_up) {
-		app_msg(a, MSG_ERR, "Not connected");
+		app_msg(a, MSG_ERR, "%s", _("Not connected"));
 		return;
 	}
 	int n = vehicle_write_pending(&a->veh);
 	if (n == 0)
-		app_msg(a, MSG_INFO, "Nothing to write - edit a value first (Enter)");
+		app_msg(a, MSG_INFO, "%s", _("Nothing to write - edit a value first (Enter)"));
 	else
-		app_msg(a, MSG_INFO, "Writing %d parameter%s...", n, n == 1 ? "" : "s");
+		app_msg(a, MSG_INFO, ngettext("Writing %d parameter...", "Writing %d parameters...", n), n);
 }
 
 void app_refresh(app_t *a) {
 	if (a->phase != PHASE_VEHICLE)
 		return;
 	if (vehicle_writes_in_flight(&a->veh)) {
-		app_msg(a, MSG_WARN, "Wait for the write to finish");
+		app_msg(a, MSG_WARN, "%s", _("Wait for the write to finish"));
 		return;
 	}
 	vehicle_request_params(&a->veh);
-	app_msg(a, MSG_INFO, "Refreshing parameters...");
+	app_msg(a, MSG_INFO, "%s", _("Refreshing parameters..."));
 }
 
 void app_toggle_fav(app_t *a, int idx) {
@@ -138,9 +139,9 @@ void app_save_file(app_t *a, const char *path_in) {
 	strftime(ts, sizeof ts, "%Y-%m-%d %H:%M:%S", localtime(&t));
 	snprintf(header, sizeof header, "%s, %s %s %s, saved by gndtui", ts, vehicle_fw_name(&a->veh), vehicle_type_name(a->veh.mav_type), ver);
 	if (paramfile_save(&a->ps, path, header, err, sizeof err))
-		app_msg(a, MSG_OK, "Saved %d parameters to %s", a->ps.n, path);
+		app_msg(a, MSG_OK, ngettext("Saved %d parameter to %s", "Saved %d parameters to %s", a->ps.n), a->ps.n, path);
 	else
-		app_msg(a, MSG_ERR, "Save failed: %s", err);
+		app_msg(a, MSG_ERR, _("Save failed: %s"), err);
 }
 
 void app_load_file(app_t *a, const char *path_in) {
@@ -149,7 +150,7 @@ void app_load_file(app_t *a, const char *path_in) {
 	int n;
 	pf_entry_t *e = paramfile_load(path, &n, err, sizeof err);
 	if (!e) {
-		app_msg(a, MSG_ERR, "Load failed: %s", err);
+		app_msg(a, MSG_ERR, _("Load failed: %s"), err);
 		return;
 	}
 	int changed = 0, same = 0, unknown = 0;
@@ -165,8 +166,8 @@ void app_load_file(app_t *a, const char *path_in) {
 			same++;
 	}
 	free(e);
-	app_msg(a, changed ? MSG_OK : MSG_INFO, "Loaded %s: %d changed, %d same, %d not on vehicle%s", path, changed, same, unknown,
-			changed ? " - press w to write" : "");
+	app_msg(a, changed ? MSG_OK : MSG_INFO, _("Loaded %s: %d changed, %d same, %d not on vehicle%s"), path, changed, same, unknown,
+			changed ? _(" - press w to write") : "");
 }
 
 /* ------------------------------------------------------------------------ */
@@ -181,8 +182,8 @@ static void start_vehicle(app_t *a) {
 	vehicle_init(&a->veh, &l, &hb, a->opt.gcs_sysid, a->opt.gcs_compid, &a->ps, vehicle_msg, a);
 	a->phase		= PHASE_VEHICLE;
 	a->connected_at = now_s();
-	app_msg(a, MSG_OK, "Connected to %s %s (sysid %u) via %s", vehicle_fw_name(&a->veh), vehicle_type_name(a->veh.mav_type), a->veh.sysid,
-			a->veh.link.name);
+	app_msg(a, MSG_OK, _("Connected to %s %s (sysid %u) via %s"), vehicle_fw_name(&a->veh), _(vehicle_type_name(a->veh.mav_type)),
+			a->veh.sysid, a->veh.link.name);
 	vehicle_request_params(&a->veh);
 }
 
@@ -203,7 +204,7 @@ static void maybe_start_meta(app_t *a, double now) {
 			snprintf(r.version, sizeof r.version, "%u.%u.%u", (sw >> 24) & 0xff, (sw >> 16) & 0xff, (sw >> 8) & 0xff);
 	}
 	a->meta_requested = true;
-	snprintf(a->meta_status, sizeof a->meta_status, "loading metadata...");
+	snprintf(a->meta_status, sizeof a->meta_status, "%s", _("loading metadata..."));
 	metafetch_start(&a->mf, &r);
 	ui_invalidate(a);
 }
@@ -222,7 +223,7 @@ static void poll_meta(app_t *a) {
 		a->attached_gen = a->ps.generation;
 		app_msg(a, MSG_INFO, "%s", msg);
 	} else {
-		snprintf(a->meta_status, sizeof a->meta_status, "no metadata");
+		snprintf(a->meta_status, sizeof a->meta_status, "%s", _("no metadata"));
 		app_msg(a, MSG_WARN, "%s", msg);
 	}
 }
@@ -290,11 +291,11 @@ int app_run(app_t *a) {
 	signal(SIGPIPE, SIG_IGN);
 
 	if (a->tui && !ui_init(a)) {
-		fprintf(stderr, "gndtui: cannot initialise the terminal\n");
+		fputs(_("gndtui: cannot initialise the terminal\n"), stderr);
 		return 1;
 	}
 	if (!a->tui)
-		fprintf(stderr, "Searching for vehicle...\n");
+		fputs(_("Searching for vehicle...\n"), stderr);
 
 	double started = now_s();
 	while (!a->quit && !g_stop) {
@@ -354,7 +355,7 @@ int app_run(app_t *a) {
 				break;
 			}
 			if (a->opt.dump_timeout > 0 && now - started > a->opt.dump_timeout) {
-				fprintf(stderr, "gndtui: timeout (%s)\n", a->phase == PHASE_DETECT ? "no vehicle found" : "parameter download");
+				fprintf(stderr, _("gndtui: timeout (%s)\n"), a->phase == PHASE_DETECT ? _("no vehicle found") : _("parameter download"));
 				if (a->phase == PHASE_VEHICLE && a->ps.n)
 					dump_params(a);
 				a->exit_code = 3;

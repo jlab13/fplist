@@ -12,6 +12,7 @@ endif()
 
 option(GNDTUI_SYSTEM_NOTCURSES "Use system notcurses if available" ON)
 option(GNDTUI_ASAN "Build with AddressSanitizer/UBSan" OFF)
+option(GNDTUI_NLS "Native language support (gettext translations)" ON)
 
 include(FetchContent)
 find_package(PkgConfig REQUIRED)
@@ -60,6 +61,7 @@ add_executable(gndtui
   src/ui.c
   src/ui_table.c
   src/ui_edit.c
+  src/i18n.c
 )
 target_compile_definitions(gndtui PRIVATE GNDTUI_VERSION="${PROJECT_VERSION}" _GNU_SOURCE)
 # snprintf truncation into fixed UI/status buffers is intentional
@@ -67,6 +69,9 @@ target_compile_options(gndtui PRIVATE -Wall -Wextra -Wshadow -Wno-unused-paramet
   -Wno-address-of-packed-member -Wno-format-truncation)
 target_link_libraries(gndtui PRIVATE mavlink cjson gndtui_notcurses
   PkgConfig::EXPAT PkgConfig::CURL Threads::Threads m)
+
+# --- translations -------------------------------------------------------------
+include(cmake/I18n.cmake)
 
 # --- test tool: a fake vehicle that speaks the parameter protocol -------------
 add_executable(fakevehicle tools/fakevehicle.c)

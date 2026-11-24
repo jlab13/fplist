@@ -1,0 +1,821 @@
+# SOME DESCRIPTIVE TITLE.
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: gndtui 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-24 23:04+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: src/app.c:48
+#, c-format
+msgid "%s is being written, try again in a moment"
+msgstr ""
+
+#: src/app.c:87
+msgid "Not connected"
+msgstr ""
+
+#: src/app.c:92
+msgid "Nothing to write - edit a value first (Enter)"
+msgstr ""
+
+#: src/app.c:94
+#, c-format
+msgid "Writing %d parameter..."
+msgid_plural "Writing %d parameters..."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/app.c:101
+msgid "Wait for the write to finish"
+msgstr ""
+
+#: src/app.c:105
+msgid "Refreshing parameters..."
+msgstr ""
+
+#: src/app.c:142
+#, c-format
+msgid "Saved %d parameter to %s"
+msgid_plural "Saved %d parameters to %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/app.c:144
+#, c-format
+msgid "Save failed: %s"
+msgstr ""
+
+#: src/app.c:153
+#, c-format
+msgid "Load failed: %s"
+msgstr ""
+
+#: src/app.c:169
+#, c-format
+msgid "Loaded %s: %d changed, %d same, %d not on vehicle%s"
+msgstr ""
+
+#: src/app.c:170
+msgid " - press w to write"
+msgstr ""
+
+#: src/app.c:185
+#, c-format
+msgid "Connected to %s %s (sysid %u) via %s"
+msgstr ""
+
+#: src/app.c:207
+msgid "loading metadata..."
+msgstr ""
+
+#: src/app.c:226
+msgid "no metadata"
+msgstr ""
+
+#: src/app.c:294
+msgid "gndtui: cannot initialise the terminal\n"
+msgstr ""
+
+#: src/app.c:298
+msgid "Searching for vehicle...\n"
+msgstr ""
+
+#: src/app.c:358
+#, c-format
+msgid "gndtui: timeout (%s)\n"
+msgstr ""
+
+#: src/app.c:358
+msgid "no vehicle found"
+msgstr ""
+
+#: src/app.c:358
+msgid "parameter download"
+msgstr ""
+
+#: src/detect.c:176 src/ui.c:371
+msgid "waiting"
+msgstr ""
+
+#: src/detect.c:203
+#, c-format
+msgid "UDP listen :%d"
+msgstr ""
+
+#: src/detect.c:260
+msgid "bootloader - waiting for firmware to start"
+msgstr ""
+
+#: src/detect.c:281
+#, c-format
+msgid "permission denied - add yourself to group '%s'"
+msgstr ""
+
+#: src/detect.c:289
+msgid "connecting..."
+msgstr ""
+
+#: src/detect.c:291
+msgid "listening, waiting for heartbeat"
+msgstr ""
+
+#: src/detect.c:293
+#, c-format
+msgid "open @%d, waiting for heartbeat"
+msgstr ""
+
+#: src/detect.c:319
+msgid "MAVLink traffic, no autopilot heartbeat yet"
+msgstr ""
+
+#: src/detect.c:326
+#, c-format
+msgid "vehicle found (sysid %u)"
+msgstr ""
+
+#: src/detect.c:357
+msgid "connected, waiting for heartbeat"
+msgstr ""
+
+#: src/main.c:15
+msgid ""
+"Usage: gndtui [options] [CONNECTION]\n"
+"\n"
+"Terminal parameter editor for ArduPilot and PX4 (MAVLink).\n"
+"Without CONNECTION the vehicle is auto-detected like QGroundControl does:\n"
+"USB flight controllers / SiK radios, UDP :14550 and TCP 127.0.0.1:5760 "
+"(SITL).\n"
+msgstr ""
+
+#: src/main.c:22
+msgid ""
+"CONNECTION:\n"
+"  /dev/ttyACM0[:BAUD]        serial port (also serial:/dev/ttyUSB0:57600)\n"
+"  udp:[HOST:]PORT            listen for UDP (e.g. udp:14550)\n"
+"  udpout:HOST:PORT           send UDP to HOST:PORT (e.g. "
+"udpout:192.168.4.1:14550)\n"
+"  tcp:[HOST:]PORT            TCP client (e.g. tcp:127.0.0.1:5760)\n"
+msgstr ""
+
+#: src/main.c:29
+msgid ""
+"Options:\n"
+"  -b, --baud N          serial baud rate (default 115200)\n"
+"  -s, --sysid N         only talk to this vehicle system id\n"
+"      --gcs-sysid N     our MAVLink system id (default 255)\n"
+"      --no-serial       auto-detect: do not probe serial ports\n"
+"      --no-udp          auto-detect: do not listen on UDP\n"
+"      --no-tcp          auto-detect: do not probe TCP (SITL)\n"
+"      --udp-port N      auto-detect UDP port (default 14550)\n"
+"      --tcp-port N      auto-detect TCP port (default 5760)\n"
+"  -m, --meta FILE       parameter metadata (apm.pdef.xml or PX4 .json)\n"
+"      --offline         never download metadata, use cache only\n"
+"  -d, --dump            no UI: download parameters, print TSV to stdout, "
+"exit\n"
+"  -t, --timeout SEC     with --dump: give up after SEC seconds (default 90)\n"
+"  -l, --list            list serial ports and how they are classified\n"
+"      --log FILE        write a debug log\n"
+"  -V, --version         print version\n"
+"  -h, --help            this help\n"
+msgstr ""
+
+#: src/main.c:53
+msgid "No ttyACM/ttyUSB ports found.\n"
+msgstr ""
+
+#: src/main.c:59
+msgid "flight controller"
+msgstr ""
+
+#: src/main.c:59
+msgid "other"
+msgstr ""
+
+#: src/main.c:59
+msgid "telemetry radio"
+msgstr ""
+
+#: src/main.c:61
+msgid "  (bootloader)"
+msgstr ""
+
+#. TRANSLATORS: first %s is what was expected (baud rate, port, ...)
+#: src/main.c:71
+#, c-format
+msgid "gndtui: invalid %s '%s'\n"
+msgstr ""
+
+#: src/main.c:120
+msgid "baud rate"
+msgstr ""
+
+#: src/main.c:123 src/main.c:126
+msgid "system id"
+msgstr ""
+
+#: src/main.c:138 src/main.c:141
+msgid "port"
+msgstr ""
+
+#: src/main.c:153
+msgid "timeout"
+msgstr ""
+
+#: src/main.c:179
+msgid "gndtui: only one connection can be given\n"
+msgstr ""
+
+#: src/main.c:184
+msgid "gndtui: nothing to connect to (all auto-detect sources disabled)\n"
+msgstr ""
+
+#: src/metafetch.c:97
+msgid "metadata: no cache directory (HOME unset?)"
+msgstr ""
+
+#: src/metafetch.c:128
+msgid "cached"
+msgstr ""
+
+#: src/metafetch.c:131
+msgid "downloaded"
+msgstr ""
+
+#: src/metafetch.c:135
+msgid "stale cache"
+msgstr ""
+
+#: src/metafetch.c:143
+#, c-format
+msgid "metadata: %s, %d params (%s)"
+msgstr ""
+
+#: src/metafetch.c:147
+#, c-format
+msgid "metadata unavailable: %s"
+msgstr ""
+
+#: src/metafetch.c:148
+msgid "offline and nothing cached"
+msgstr ""
+
+#: src/metafetch.c:148
+msgid "unknown error"
+msgstr ""
+
+#: src/metafetch.c:158
+msgid "metadata: cannot start thread"
+msgstr ""
+
+#: src/ui.c:138
+msgid "searching for vehicle"
+msgstr ""
+
+#: src/ui.c:152
+#, c-format
+msgid "Params %d/%d %s"
+msgstr ""
+
+#: src/ui.c:154
+msgid "Requesting params..."
+msgstr ""
+
+#: src/ui.c:156
+#, c-format
+msgid "Params %d"
+msgstr ""
+
+#: src/ui.c:161
+#, c-format
+msgid "  │  %d modified"
+msgid_plural "  │  %d modified"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui.c:171
+msgid " ○ NO LINK "
+msgstr ""
+
+#: src/ui.c:171
+msgid " ● LINK "
+msgstr ""
+
+#: src/ui.c:245
+msgid " Search: "
+msgstr ""
+
+#: src/ui.c:249
+msgid "  Enter: keep  Esc: clear"
+msgstr ""
+
+#: src/ui.c:283
+#, c-format
+msgid "range %s..%s%s%s  "
+msgstr ""
+
+#: src/ui.c:285
+msgid "Enter: set  Esc: cancel"
+msgstr ""
+
+#: src/ui.c:286
+msgid "  Tab: list"
+msgstr ""
+
+#: src/ui.c:292
+msgid " Load from: "
+msgstr ""
+
+#: src/ui.c:292
+msgid " Save to: "
+msgstr ""
+
+#: src/ui.c:297
+msgid "  Enter: ok  Esc: cancel"
+msgstr ""
+
+#. TRANSLATORS: the answer keys stay y / n
+#: src/ui.c:311
+#, c-format
+msgid " %s  [y/n]"
+msgstr ""
+
+#: src/ui.c:324
+msgid " q: quit"
+msgstr ""
+
+#: src/ui.c:328
+msgid ""
+" ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  s "
+"save  l load  v wrap  d details  ? help  q quit"
+msgstr ""
+
+#: src/ui.c:352
+msgid "Connecting:"
+msgstr ""
+
+#: src/ui.c:352
+msgid "Looking for a vehicle on these connections:"
+msgstr ""
+
+#: src/ui.c:359
+msgid "Connection"
+msgstr ""
+
+#: src/ui.c:360
+msgid "Status"
+msgstr ""
+
+#: src/ui.c:378
+#, c-format
+msgid " %llu msgs"
+msgstr ""
+
+#: src/ui.c:390
+msgid "(no candidate ports yet - plug in a flight controller)"
+msgstr ""
+
+#: src/ui.c:395
+msgid "Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"
+msgstr ""
+
+#: src/ui.c:396
+msgid "UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."
+msgstr ""
+
+#: src/ui.c:397
+msgid ""
+"Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui "
+"tcp:host:5760"
+msgstr ""
+
+#: src/ui.c:417
+msgid "Navigation"
+msgstr ""
+
+#: src/ui.c:418
+msgid "move"
+msgstr ""
+
+#: src/ui.c:419
+msgid "page"
+msgstr ""
+
+#: src/ui.c:420
+msgid "first / last"
+msgstr ""
+
+#: src/ui.c:421
+msgid "click, wheel, double click to edit"
+msgstr ""
+
+#: src/ui.c:421
+msgid "mouse"
+msgstr ""
+
+#: src/ui.c:422
+msgid "Editing"
+msgstr ""
+
+#: src/ui.c:423
+msgid "edit value (list / bitmask editor if known)"
+msgstr ""
+
+#: src/ui.c:424
+msgid "undo edit of this / all parameters"
+msgstr ""
+
+#: src/ui.c:425
+msgid "write modified parameters to the vehicle"
+msgstr ""
+
+#: src/ui.c:426
+msgid "refresh (re-download) all parameters"
+msgstr ""
+
+#: src/ui.c:427
+msgid "View"
+msgstr ""
+
+#: src/ui.c:428
+msgid "search name & description, Esc clears"
+msgstr ""
+
+#: src/ui.c:429
+msgid "show only modified parameters"
+msgstr ""
+
+#: src/ui.c:430
+msgid "toggle favourite (favourites sort first)"
+msgstr ""
+
+#: src/ui.c:431
+msgid "wrap rows (Mission Planner style)"
+msgstr ""
+
+#: src/ui.c:432
+msgid "toggle the details pane"
+msgstr ""
+
+#: src/ui.c:433
+msgid "Files"
+msgstr ""
+
+#: src/ui.c:434
+msgid "save parameters (Mission Planner .param)"
+msgstr ""
+
+#: src/ui.c:435
+msgid "load parameters from file (become edits)"
+msgstr ""
+
+#: src/ui.c:437
+msgid "quit"
+msgstr ""
+
+#: src/ui.c:446
+#, c-format
+msgid "gndtui %s - keys"
+msgstr ""
+
+#: src/ui.c:482
+msgid "terminal too small"
+msgstr ""
+
+#: src/ui.c:568
+#, c-format
+msgid "%d parameter edit not written to the vehicle. Quit anyway?"
+msgid_plural "%d parameter edits not written to the vehicle. Quit anyway?"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui.c:704
+msgid "Showing all parameters"
+msgstr ""
+
+#: src/ui.c:704
+msgid "Showing modified parameters only (m: all)"
+msgstr ""
+
+#: src/ui.c:717
+#, c-format
+msgid "Reverted %s"
+msgstr ""
+
+#: src/ui.c:722
+msgid "Discard all parameter edits?"
+msgstr ""
+
+#: src/ui.c:802
+#, c-format
+msgid "Discarded %d edit"
+msgid_plural "Discarded %d edits"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui_edit.c:143
+#, c-format
+msgid "%s: %s → %s  (w: write to vehicle, z: undo)"
+msgstr ""
+
+#: src/ui_edit.c:145
+#, c-format
+msgid "%s unchanged"
+msgstr ""
+
+#: src/ui_edit.c:155
+#, c-format
+msgid "%s is being written"
+msgstr ""
+
+#: src/ui_edit.c:160
+#, c-format
+msgid "%s is read-only"
+msgstr ""
+
+#: src/ui_edit.c:197
+msgid "not a number"
+msgstr ""
+
+#: src/ui_edit.c:202
+#, c-format
+msgid "%s needs an integer"
+msgstr ""
+
+#: src/ui_edit.c:213
+#, c-format
+msgid "%s range is %s..%s"
+msgstr ""
+
+#: src/ui_edit.c:220
+#, c-format
+msgid "outside recommended range %s..%s - Enter again to set anyway"
+msgstr ""
+
+#: src/ui_edit.c:390
+msgid "Enter select · Tab type a value · Esc cancel"
+msgstr ""
+
+#: src/ui_edit.c:390
+msgid "Space toggle · a all · n none · Enter set · Tab type · Esc"
+msgstr ""
+
+#: src/ui_edit.c:426
+msgid "   ← current"
+msgstr ""
+
+#: src/ui_edit.c:437
+#, c-format
+msgid " value = %llu   %s"
+msgstr ""
+
+#: src/ui_table.c:18
+msgid "Advanced"
+msgstr ""
+
+#: src/ui_table.c:18
+msgid "Developer"
+msgstr ""
+
+#: src/ui_table.c:18
+msgid "Standard"
+msgstr ""
+
+#: src/ui_table.c:18
+msgid "System"
+msgstr ""
+
+#: src/ui_table.c:18
+msgid "User"
+msgstr ""
+
+#. TRANSLATORS: table column titles. Widths: Command 14, Value 12, Units 8, Fav 3 columns.
+#: src/ui_table.c:21
+msgid "Command"
+msgstr ""
+
+#: src/ui_table.c:21
+msgid "Desc"
+msgstr ""
+
+#: src/ui_table.c:21
+msgid "Fav"
+msgstr ""
+
+#: src/ui_table.c:21
+msgid "Options"
+msgstr ""
+
+#: src/ui_table.c:21
+msgid "Units"
+msgstr ""
+
+#: src/ui_table.c:21
+msgid "Value"
+msgstr ""
+
+#: src/ui_table.c:349
+msgid "(none)"
+msgstr ""
+
+#: src/ui_table.c:397
+#, c-format
+msgid " · range %s..%s"
+msgstr ""
+
+#: src/ui_table.c:402
+#, c-format
+msgid " · step %s"
+msgstr ""
+
+#: src/ui_table.c:407
+#, c-format
+msgid " · default %s"
+msgstr ""
+
+#: src/ui_table.c:412
+msgid " · reboot required"
+msgstr ""
+
+#: src/ui_table.c:414
+msgid " · read-only"
+msgstr ""
+
+#: src/ui_table.c:434
+#, c-format
+msgid " Vehicle: %s   →   new: %s%s"
+msgstr ""
+
+#: src/ui_table.c:435
+msgid "  (writing...)"
+msgstr ""
+
+#: src/ui_table.c:436
+msgid "  (write FAILED)"
+msgstr ""
+
+#: src/ui_table.c:437
+msgid "  (not written - press w)"
+msgstr ""
+
+#: src/ui_table.c:440
+#, c-format
+msgid " Value: %s"
+msgstr ""
+
+#: src/ui_table.c:460
+msgid "(metadata loading...)"
+msgstr ""
+
+#: src/ui_table.c:460
+msgid "(no metadata for this parameter)"
+msgstr ""
+
+#: src/ui_table.c:500
+msgid "Downloading parameters..."
+msgstr ""
+
+#: src/ui_table.c:500
+msgid "No parameters received."
+msgstr ""
+
+#: src/ui_table.c:502
+msgid "No modified parameters (m: show all)."
+msgstr ""
+
+#: src/ui_table.c:504
+#, c-format
+msgid "No parameters match \"%s\" (Esc clears the search)."
+msgstr ""
+
+#: src/vehicle.c:119
+#, c-format
+msgid "Downloaded %d parameter in %.1f s"
+msgid_plural "Downloaded %d parameters in %.1f s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/vehicle.c:122
+#, c-format
+msgid "Parameter download incomplete: %d of %d received"
+msgstr ""
+
+#: src/vehicle.c:217
+#, c-format
+msgid "Reconnected via %s"
+msgstr ""
+
+#: src/vehicle.c:219
+msgid "Vehicle heartbeat restored"
+msgstr ""
+
+#: src/vehicle.c:323
+#, c-format
+msgid "Link lost (%s) - reconnecting"
+msgstr ""
+
+#: src/vehicle.c:378
+msgid "No response to parameter list request"
+msgstr ""
+
+#: src/vehicle.c:435
+#, c-format
+msgid "Write %s failed (vehicle value %s)"
+msgstr ""
+
+#: src/vehicle.c:450
+#, c-format
+msgid "Wrote %d of %d parameter, %d failed"
+msgid_plural "Wrote %d of %d parameters, %d failed"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/vehicle.c:453
+#, c-format
+msgid "Wrote %d parameter%s"
+msgid_plural "Wrote %d parameters%s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/vehicle.c:454
+msgid " - reboot required for changes to take effect"
+msgstr ""
+
+#: src/vehicle.c:485
+msgid "No heartbeat from the vehicle"
+msgstr ""
+
+#: src/vehicle.c:521
+msgid "Plane"
+msgstr ""
+
+#: src/vehicle.c:523
+msgid "Quadrotor"
+msgstr ""
+
+#: src/vehicle.c:525
+msgid "Coaxial"
+msgstr ""
+
+#: src/vehicle.c:527
+msgid "Helicopter"
+msgstr ""
+
+#: src/vehicle.c:529
+msgid "Antenna tracker"
+msgstr ""
+
+#: src/vehicle.c:531
+msgid "Airship"
+msgstr ""
+
+#: src/vehicle.c:533
+msgid "Rover"
+msgstr ""
+
+#: src/vehicle.c:535
+msgid "Boat"
+msgstr ""
+
+#: src/vehicle.c:537
+msgid "Submarine"
+msgstr ""
+
+#: src/vehicle.c:539
+msgid "Hexarotor"
+msgstr ""
+
+#: src/vehicle.c:541
+msgid "Octorotor"
+msgstr ""
+
+#: src/vehicle.c:543
+msgid "Tricopter"
+msgstr ""
+
+#: src/vehicle.c:545
+msgid "Dodecarotor"
+msgstr ""
+
+#: src/vehicle.c:547
+msgid "Decarotor"
+msgstr ""
+
+#: src/vehicle.c:555
+msgid "VTOL"
+msgstr ""
+
+#: src/vehicle.c:557
+msgid "Vehicle"
+msgstr ""
