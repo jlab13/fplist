@@ -25,7 +25,8 @@ typedef struct app_opts {
 	char meta_path[1024];
 	char meta_lang[16]; /* "auto" (from locale), "" = none, or ll_CC */
 	bool offline;
-	bool dump; /* headless: print parameters and exit */
+	bool no_ftp; /* never use MAVFTP for parameters */
+	bool dump;	 /* headless: print parameters and exit */
 	double dump_timeout;
 } app_opts_t;
 

@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "ftp.h"
 #include "link.h"
 #include "params.h"
 
@@ -14,6 +15,7 @@ typedef enum { VFW_ARDUPILOT, VFW_PX4, VFW_OTHER } vehicle_fw_t;
 
 typedef enum {
 	PDL_IDLE,
+	PDL_FTP,	 /* MAVFTP @PARAM/param.pck (ArduPilot) */
 	PDL_LISTING, /* PARAM_REQUEST_LIST sent, streaming / filling gaps */
 	PDL_DONE,
 	PDL_FAILED,
@@ -59,6 +61,11 @@ typedef struct vehicle {
 	double pdl_duration;
 	int gap_req[64]; /* indices asked for in the current gap-fill batch */
 	int gap_n;
+
+	/* MAVFTP parameter download (ArduPilot), with defaults */
+	ftp_t ftp;
+	bool ftp_disabled; /* failed before: use PARAM_REQUEST_LIST */
+	bool via_ftp;	   /* last complete download came over MAVFTP */
 
 	/* write session statistics */
 	int w_total, w_ok, w_failed;

@@ -59,7 +59,8 @@ typedef struct ui {
 	bool user_moved; /* until the user navigates, stay at the top while loading */
 	bool wrap;
 	bool details;
-	bool modified_only;
+	bool modified_only;	  /* m: unsaved edits of this session */
+	bool nondefault_only; /* n: value differs from the default (QGC "Modified") */
 	lineedit_t search;
 	/* active group filter (QGC style category + group); empty = all */
 	char group_cat[48];
@@ -153,6 +154,7 @@ void ui_box(struct ncplane *n, int y, int x, int h, int w, const char *title);
 #define C_DIM 0x9e9e9e
 #define C_OPT 0xb8b8b8
 #define C_PENDING 0xffd54f
+#define C_NONDEF 0x80cbc4 /* value differs from the default */
 #define C_SENT 0x4fc3f7
 #define C_FAIL 0xef5350
 #define C_OK 0x81c784

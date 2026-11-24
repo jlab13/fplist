@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "i18n.h"
+#include "parampck.h"
 #include "util.h"
 
 #define HB_PERIOD 1.0
@@ -228,6 +229,15 @@ static void on_message(void *ctx, link_t *l, const mavlink_message_t *msg) {
 		if (msg->compid == v->compid)
 			on_autopilot_version(v, msg);
 		break;
+	case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL: {
+		if (msg->compid != v->compid)
+			break;
+		mavlink_file_transfer_protocol_t f;
+		mavlink_msg_file_transfer_protocol_decode(msg, &f);
+		if (f.target_system == v->gcs_sysid || f.target_system == 0)
+			ftp_handle(&v->ftp, f.payload, now_s());
+		break;
+	}
 	case MAVLINK_MSG_ID_STATUSTEXT: {
 		mavlink_statustext_t st;
 		mavlink_msg_statustext_decode(msg, &st);
@@ -252,6 +262,8 @@ static void on_message(void *ctx, link_t *l, const mavlink_message_t *msg) {
 
 /* ------------------------------------------------------------------------ */
 /* lifecycle                                                                  */
+
+static bool ftp_send(void *ctx, const uint8_t payload[FTP_PAYLOAD_LEN]);
 
 void vehicle_init(vehicle_t *v, link_t *link, const mavlink_message_t *hbmsg, uint8_t gcs_sysid, uint8_t gcs_compid, paramset_t *ps,
 		vehicle_msg_fn fn, void *ctx) {
@@ -293,11 +305,14 @@ void vehicle_init(vehicle_t *v, link_t *link, const mavlink_message_t *hbmsg, ui
 	/* Defaults until AUTOPILOT_VERSION tells us otherwise. */
 	v->enc			= v->fw == VFW_ARDUPILOT ? PENC_CCAST : PENC_BYTEWISE;
 	v->version_next = 0;
+	ftp_init(&v->ftp, ftp_send, v);
 	LOG("vehicle: connected sysid=%u compid=%u autopilot=%u type=%u mavlink%d via %s", v->sysid, v->compid, hb.autopilot, hb.type,
 			v->mavlink1 ? 1 : 2, v->link.name);
 }
 
 void vehicle_close(vehicle_t *v) {
+	ftp_cancel(&v->ftp);
+	ftp_free(&v->ftp);
 	link_close(&v->link);
 	v->link_up = false;
 }
@@ -328,7 +343,18 @@ void vehicle_service(vehicle_t *v, short revents) {
 /* ------------------------------------------------------------------------ */
 /* parameter protocol                                                         */
 
-void vehicle_request_params(vehicle_t *v) {
+#define FTP_PARAM_PATH "@PARAM/param.pck?withdefaults=1"
+
+static bool ftp_send(void *ctx, const uint8_t payload[FTP_PAYLOAD_LEN]) {
+	vehicle_t *v = ctx;
+	mavlink_message_t msg;
+	mavlink_file_transfer_protocol_t f = {.target_network = 0, .target_system = v->sysid, .target_component = v->compid};
+	memcpy(f.payload, payload, sizeof f.payload);
+	mavlink_msg_file_transfer_protocol_encode_status(v->gcs_sysid, v->gcs_compid, &v->link.tx_status, &msg, &f);
+	return link_send(&v->link, &msg);
+}
+
+static void start_param_list(vehicle_t *v) {
 	ps_reset_download(v->ps);
 	v->pdl		   = PDL_LISTING;
 	v->pdl_started = v->pdl_last_rx = now_s();
@@ -338,6 +364,63 @@ void vehicle_request_params(vehicle_t *v) {
 	v->pdl_last_count				= 0;
 	v->gap_n						= 0;
 	send_request_list(v);
+}
+
+/* Like QGC / Mission Planner: ArduPilot parameters (with their defaults)
+ * come as one file over MAVFTP; PARAM_REQUEST_LIST is the fallback. */
+void vehicle_request_params(vehicle_t *v) {
+	if (v->fw != VFW_ARDUPILOT || v->ftp_disabled) {
+		start_param_list(v);
+		return;
+	}
+	ps_reset_download(v->ps);
+	v->pdl		   = PDL_FTP;
+	v->pdl_started = now_s();
+	ftp_start(&v->ftp, FTP_PARAM_PATH, v->pdl_started);
+}
+
+static void pck_param(void *ctx, const char *name, uint8_t type, double value, bool has_default, double def) {
+	vehicle_t *v	  = ctx;
+	int idx			  = ps_upsert(v->ps, name, NULL); /* may realloc v->ps->v: index first */
+	param_t *p		  = &v->ps->v[idx];
+	p->type			  = type;
+	p->value		  = value;
+	p->raw			  = param_encode(v->enc, type, value);
+	p->have_value	  = true;
+	p->fw_has_default = has_default;
+	p->fw_default	  = def;
+}
+
+static void tick_ftp(vehicle_t *v, double now) {
+	if (v->pdl != PDL_FTP)
+		return;
+	ftp_tick(&v->ftp, now);
+	if (v->ftp.st == FTP_DONE) {
+		char err[160];
+		int n = parampck_parse(v->ftp.buf, (size_t)v->ftp.size, pck_param, v, err, sizeof err);
+		ftp_free(&v->ftp);
+		if (n > 0) {
+			v->ps->revision++;
+			v->ps->generation++;
+			v->via_ftp		= true;
+			v->pdl			= PDL_DONE;
+			v->pdl_duration = now - v->pdl_started;
+			vmsg(v, MSG_OK, ngettext("Downloaded %d parameter via MAVFTP in %.1f s", "Downloaded %d parameters via MAVFTP in %.1f s", n), n,
+					v->pdl_duration);
+			return;
+		}
+		LOG("vehicle: %s", err);
+		xstrlcpy(v->ftp.err, err, sizeof v->ftp.err);
+		v->ftp.st = FTP_FAILED;
+	}
+	if (v->ftp.st == FTP_FAILED) {
+		/* don't try again on this connection: the next refresh goes straight to the list */
+		v->ftp_disabled = true;
+		v->via_ftp		= false;
+		ftp_free(&v->ftp);
+		vmsg(v, MSG_WARN, _("MAVFTP unavailable (%s), using PARAM_REQUEST_LIST"), v->ftp.err);
+		start_param_list(v);
+	}
 }
 
 int vehicle_write_pending(vehicle_t *v) {
@@ -496,6 +579,7 @@ void vehicle_tick(vehicle_t *v, double now) {
 		else /* older firmware */
 			send_command(v, MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1);
 	}
+	tick_ftp(v, now);
 	tick_download(v, now);
 	tick_writes(v, now);
 }

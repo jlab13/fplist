@@ -20,7 +20,7 @@ static const char *const meta_categories[]
 /* TRANSLATORS: table column titles. Widths: Command 14, Value 12, Units 8, Fav 3 columns. */
 static const char *col_titles[NCOLS] = {N_("Command"), N_("Value"), N_("Units"), N_("Options"), N_("Desc"), N_("Fav")};
 
-#define DETAILS_H 6 /* heading + 5 lines */
+#define DETAILS_H 7 /* heading + 6 lines */
 #define MAX_WRAP 64
 
 /* ------------------------------------------------------------------------ */
@@ -80,6 +80,8 @@ void ui_view_rebuild(app_t *a) {
 		if (!p->have_value)
 			continue;
 		if (u->modified_only && !p->pending && p->wstate != PW_FAILED)
+			continue;
+		if (u->nondefault_only && !param_is_nondefault(p))
 			continue;
 		if (u->group_name[0] && (!p->category || strcmp(p->category, u->group_cat) != 0 || strcmp(p->group, u->group_name) != 0))
 			continue;
@@ -258,6 +260,8 @@ static void value_text(const param_t *p, char *out, int n, uint32_t *color) {
 		*color = C_PENDING;
 	else if (out_of_range(p, v))
 		*color = C_ERR;
+	else if (param_is_nondefault(p))
+		*color = C_NONDEF;
 }
 
 static void put_wrapped(struct ncplane *n, int y, int x, int w, int h, const char *text) {
@@ -398,9 +402,10 @@ static void draw_details(app_t *a, int y0) {
 		fmt_number(m->increment, false, inc, sizeof inc);
 		al = sappendf(attrs, sizeof attrs, al, _(" · step %s"), inc);
 	}
-	if (m && m->has_default) {
+	double defv;
+	if (param_default(p, &defv)) {
 		char d[32];
-		fmt_number(m->def, param_type_is_int(p->type), d, sizeof d);
+		fmt_number(defv, param_type_is_int(p->type), d, sizeof d);
 		al = sappendf(attrs, sizeof attrs, al, _(" · default %s"), d);
 	}
 	if (m && m->user && *m->user)
@@ -438,31 +443,22 @@ static void draw_details(app_t *a, int y0) {
 	} else {
 		snprintf(line, sizeof line, _(" Value: %s"), cur);
 	}
+	ncplane_set_styles(n, NCSTYLE_BOLD);
 	ui_put(n, y++, 0, W, line);
+	ncplane_set_styles(n, NCSTYLE_NONE);
 	ncplane_set_fg_default(n);
 
-	/* description (+ the English original under a translation) + options,
-	 * wrapped into the remaining lines */
+	/* description + options, wrapped into the remaining lines; options keep
+	 * up to 2 lines (or what they need), the description gets the rest */
 	int left		 = DETAILS_H - 2;
 	const char *desc = desc_text(p);
 	const char *opts = m && m->options && *m->options && (m->nvalues || m->nbits) ? meta_options(m) : NULL;
-	char orig[2048]	 = "";
-	if (meta_desc_translated(m))
-		snprintf(orig, sizeof orig, "EN: %s", m->desc && *m->desc ? m->desc : (m->human ? m->human : ""));
-	span_t dl[MAX_WRAP], ol[MAX_WRAP], el[MAX_WRAP];
-	int ndl = *desc ? wrap_text(desc, W - 2, dl, MAX_WRAP) : 0;
-	int nol = opts ? wrap_text(opts, W - 2, ol, MAX_WRAP) : 0;
-	int nel = orig[0] ? wrap_text(orig, W - 2, el, MAX_WRAP) : 0;
-	/* budget: options keep up to 2 lines (or what they need), the original 1+ */
-	int oshow = MIN(nol, 2);
-	int eshow = MIN(nel, nel ? 1 : 0);
-	int dshow = MIN(ndl, MAX(left - oshow - eshow, 1));
-	eshow	  = MIN(nel, MAX(left - dshow - oshow, eshow ? 1 : 0));
+	span_t dl[MAX_WRAP], ol[MAX_WRAP];
+	int ndl	  = *desc ? wrap_text(desc, W - 2, dl, MAX_WRAP) : 0;
+	int nol	  = opts ? wrap_text(opts, W - 2, ol, MAX_WRAP) : 0;
+	int dshow = MIN(ndl, MAX(left - MIN(nol, 2), 1));
 	for (int i = 0; i < dshow && i < MAX_WRAP; i++)
 		ui_putn(n, y++, 1, W - 2, desc + dl[i].off, dl[i].len);
-	ui_rgb_fg(n, C_DIM);
-	for (int i = 0; i < eshow && y < y0 + DETAILS_H && i < MAX_WRAP; i++)
-		ui_putn(n, y++, 1, W - 2, orig + el[i].off, el[i].len);
 	ui_rgb_fg(n, C_OPT);
 	for (int i = 0; i < nol && y < y0 + DETAILS_H && i < MAX_WRAP; i++)
 		ui_putn(n, y++, 1, W - 2, opts + ol[i].off, ol[i].len);
@@ -511,6 +507,9 @@ void ui_draw_table(app_t *a) {
 			t = a->veh.pdl == PDL_FAILED ? _("No parameters received.") : _("Downloading parameters...");
 		else if (u->modified_only)
 			t = _("No modified parameters (m: show all).");
+		else if (u->nondefault_only)
+			t = ps_default_count(&a->ps) ? _("All parameters have their default values (n: show all).")
+										 : _("Default values are unknown for this vehicle (n: show all).");
 		else if (u->group_name[0] && !u->search.len)
 			t = _("No parameters in this group (Esc: all groups).");
 		else {

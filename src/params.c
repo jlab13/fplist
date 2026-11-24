@@ -314,3 +314,34 @@ void ps_assign_groups(paramset_t *ps, bool ardupilot) {
 	}
 	free(idx);
 }
+
+bool param_default(const param_t *p, double *out) {
+	if (p->fw_has_default) {
+		*out = p->fw_default;
+		return true;
+	}
+	if (p->meta && p->meta->has_default) {
+		*out = p->meta->def;
+		return true;
+	}
+	return false;
+}
+
+bool param_values_equal(uint8_t type, double a, double b) {
+	if (param_type_is_int(type))
+		return llround(a) == llround(b);
+	return (float)a == (float)b;
+}
+
+bool param_is_nondefault(const param_t *p) {
+	double d;
+	return p->have_value && param_default(p, &d) && !param_values_equal(p->type, p->value, d);
+}
+
+int ps_default_count(const paramset_t *ps) {
+	int n = 0;
+	double d;
+	for (int i = 0; i < ps->n; i++)
+		n += param_default(&ps->v[i], &d);
+	return n;
+}

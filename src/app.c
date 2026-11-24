@@ -180,8 +180,9 @@ static void start_vehicle(app_t *a) {
 		return;
 	ps_clear(&a->ps);
 	vehicle_init(&a->veh, &l, &hb, a->opt.gcs_sysid, a->opt.gcs_compid, &a->ps, vehicle_msg, a);
-	a->phase		= PHASE_VEHICLE;
-	a->connected_at = now_s();
+	a->veh.ftp_disabled = a->opt.no_ftp;
+	a->phase			= PHASE_VEHICLE;
+	a->connected_at		= now_s();
 	app_msg(a, MSG_OK, _("Connected to %s %s (sysid %u) via %s"), vehicle_fw_name(&a->veh), _(vehicle_type_name(a->veh.mav_type)),
 			a->veh.sysid, a->veh.link.name);
 	vehicle_request_params(&a->veh);

@@ -41,6 +41,7 @@ static int loss_pct;
 static int rate		 = 800;
 static uint8_t sysid = 1;
 static bool v1;
+static bool no_ftp;
 
 static int fd = -1, listen_fd = -1, pty_slave = -1;
 static bool is_udp;
@@ -263,6 +264,143 @@ static void send_version(void) {
 	send_msg(&m);
 }
 
+/* ---------------------------------------------------------------------- */
+/* MAVFTP server: @PARAM/param.pck like ArduPilot (incl. an over-estimated  */
+/* size in the open reply, burst reads ending in an EOF NAK).               */
+
+static uint8_t *pck;
+static uint32_t pck_len;
+
+static double param_default_of(int i) {
+	/* every 5th parameter differs from its default, to exercise "non-default" */
+	if (i % 5 != 0)
+		return P[i].value;
+	return P[i].type == MAV_PARAM_TYPE_REAL32 ? P[i].value * 0.5 + 1 : P[i].value + 1;
+}
+
+static void pck_put(uint8_t **b, uint32_t *n, uint32_t *cap, const void *d, uint32_t len) {
+	if (*n + len > *cap) {
+		*cap = (*n + len) * 2;
+		*b	 = realloc(*b, *cap);
+	}
+	memcpy(*b + *n, d, len);
+	*n += len;
+}
+
+static void pck_value(uint8_t **b, uint32_t *n, uint32_t *cap, uint8_t aptype, double v) {
+	if (aptype == 1) {
+		int8_t x = (int8_t)v;
+		pck_put(b, n, cap, &x, 1);
+	} else if (aptype == 2) {
+		int16_t x = (int16_t)v;
+		pck_put(b, n, cap, &x, 2);
+	} else if (aptype == 3) {
+		int32_t x = (int32_t)v;
+		pck_put(b, n, cap, &x, 4);
+	} else {
+		float x = (float)v;
+		pck_put(b, n, cap, &x, 4);
+	}
+}
+
+static void build_pck(bool defaults) {
+	uint32_t cap = 4096, n = 0;
+	free(pck);
+	uint8_t *b		= malloc(cap);
+	uint16_t hdr[3] = {defaults ? 0x671C : 0x671B, (uint16_t)NP, (uint16_t)NP};
+	pck_put(&b, &n, &cap, hdr, 6);
+	const char *prev = "";
+	for (int i = 0; i < NP; i++) {
+		const char *name = P[i].name;
+		uint8_t aptype	 = P[i].type == MAV_PARAM_TYPE_INT8		? 1
+						   : P[i].type == MAV_PARAM_TYPE_INT16	? 2
+						   : P[i].type == MAV_PARAM_TYPE_REAL32 ? 4
+																: 3;
+		size_t common	 = 0;
+		while (common < 15 && prev[common] && prev[common] == name[common])
+			common++;
+		size_t nl = strlen(name) - common;
+		if (nl == 0) { /* identical prefix: keep at least one char */
+			common--;
+			nl = 1;
+		}
+		uint8_t h[2] = {(uint8_t)(aptype | (defaults ? 0x10 : 0)), (uint8_t)(((nl - 1) << 4) | common)};
+		pck_put(&b, &n, &cap, h, 2);
+		pck_put(&b, &n, &cap, name + common, (uint32_t)nl);
+		pck_value(&b, &n, &cap, aptype, P[i].value);
+		if (defaults)
+			pck_value(&b, &n, &cap, aptype, param_default_of(i));
+		prev = name;
+	}
+	pck		= b;
+	pck_len = n;
+}
+
+static void ftp_reply(const uint8_t *req, uint8_t opcode, uint8_t size, uint32_t offset, const void *data, bool burst_complete) {
+	mavlink_message_t m;
+	mavlink_file_transfer_protocol_t f = {0};
+	uint16_t seq					   = (uint16_t)(req[0] | req[1] << 8) + 1;
+	f.payload[0]					   = (uint8_t)seq;
+	f.payload[1]					   = (uint8_t)(seq >> 8);
+	f.payload[2]					   = req[2];
+	f.payload[3]					   = opcode;
+	f.payload[4]					   = size;
+	f.payload[5]					   = req[3];
+	f.payload[6]					   = burst_complete;
+	memcpy(f.payload + 8, &offset, 4);
+	if (data && size)
+		memcpy(f.payload + 12, data, size);
+	mavlink_msg_file_transfer_protocol_encode_status(sysid, 1, &txst, &m, &f);
+	send_msg(&m);
+}
+
+static void ftp_nak(const uint8_t *req, uint8_t err, uint32_t offset) { ftp_reply(req, 129, 1, offset, &err, false); }
+
+static void handle_ftp(const uint8_t *p) {
+	uint8_t op = p[3], size = p[4];
+	uint32_t off;
+	memcpy(&off, p + 8, 4);
+	switch (op) {
+	case 1: /* TerminateSession */
+	case 2: /* ResetSessions */
+		ftp_reply(p, 128, 0, 0, NULL, false);
+		break;
+	case 4: { /* OpenFileRO */
+		char path[240] = {0};
+		memcpy(path, p + 12, size < 239 ? size : 239);
+		if (px4 || no_ftp || strncmp(path, "@PARAM/param.pck", 16) != 0) {
+			ftp_nak(p, 10, 0); /* FileNotFound */
+			break;
+		}
+		build_pck(strstr(path, "withdefaults=1") != NULL);
+		uint32_t estimate = pck_len + 1000; /* ArduPilot over-estimates */
+		ftp_reply(p, 128, 4, 0, &estimate, false);
+		fprintf(stderr, "FTP open %s (%u bytes)\n", path, pck_len);
+		break;
+	}
+	case 5:	   /* ReadFile */
+	case 15: { /* BurstReadFile */
+		if (!pck || off >= pck_len) {
+			ftp_nak(p, 6, off); /* EOF */
+			break;
+		}
+		for (uint32_t o = off; o < pck_len; o += 239) {
+			uint32_t n = pck_len - o < 239 ? pck_len - o : 239;
+			bool last  = op == 5 || o + n >= pck_len;
+			if (rand() % 100 >= loss_pct)
+				ftp_reply(p, 128, (uint8_t)n, o, pck + o, last);
+			if (op == 5)
+				break;
+		}
+		if (op == 15)
+			ftp_nak(p, 6, pck_len); /* burst ends at EOF */
+		break;
+	}
+	default:
+		ftp_nak(p, 7, 0); /* UnknownCommand */
+	}
+}
+
 static void handle(const mavlink_message_t *msg) {
 	switch (msg->msgid) {
 	case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
@@ -300,6 +438,12 @@ static void handle(const mavlink_message_t *msg) {
 		}
 		break;
 	}
+	case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL: {
+		mavlink_file_transfer_protocol_t f;
+		mavlink_msg_file_transfer_protocol_decode(msg, &f);
+		handle_ftp(f.payload);
+		break;
+	}
 	case MAVLINK_MSG_ID_COMMAND_LONG: {
 		mavlink_command_long_t c;
 		mavlink_msg_command_long_decode(msg, &c);
@@ -332,7 +476,7 @@ static void parse(const uint8_t *b, ssize_t n) {
 static void usage(void) {
 	fprintf(stderr, "usage: fakevehicle [--px4] [--udp HOST:PORT | --tcp PORT | --pty]\n"
 					"                   [--params FILE] [--count N] [--loss PCT] [--rate N]\n"
-					"                   [--sysid N] [--v1]\n");
+					"                   [--sysid N] [--v1] [--no-ftp]\n");
 }
 
 int main(int argc, char **argv) {
@@ -351,6 +495,7 @@ int main(int argc, char **argv) {
 			{"rate",	  required_argument, 0, 'r'},
 			{"sysid",	  required_argument, 0, 's'},
 			{"v1",		  no_argument,		 0, '1'},
+			{"no-ftp",	  no_argument,		 0, 'F'},
 			{"help",	  no_argument,		 0, 'h'},
 			{0,			  0,				 0, 0  },
 	};
@@ -386,6 +531,9 @@ int main(int argc, char **argv) {
 			break;
 		case 's':
 			sysid = (uint8_t)atoi(optarg);
+			break;
+		case 'F':
+			no_ftp = true;
 			break;
 		case '1':
 			v1 = true;

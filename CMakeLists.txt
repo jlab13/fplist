@@ -63,6 +63,8 @@ add_executable(gndtui
   src/ui_edit.c
   src/ui_groups.c
   src/i18n.c
+  src/ftp.c
+  src/parampck.c
 )
 target_compile_definitions(gndtui PRIVATE GNDTUI_VERSION="${PROJECT_VERSION}" _GNU_SOURCE)
 # snprintf truncation into fixed UI/status buffers is intentional

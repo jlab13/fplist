@@ -145,7 +145,12 @@ static void draw_title(app_t *a) {
 		vehicle_version_string(v, ver, sizeof ver);
 		char prog[96];
 		paramset_t *ps = &a->ps;
-		if (v->pdl == PDL_LISTING && ps->expected) {
+		if (v->pdl == PDL_FTP) {
+			if (v->ftp.size_hint > 0)
+				snprintf(prog, sizeof prog, _("MAVFTP %u%%"), (unsigned)MIN(99.0, 100.0 * v->ftp.received / (double)v->ftp.size_hint));
+			else
+				snprintf(prog, sizeof prog, _("MAVFTP %.1f KB"), v->ftp.received / 1024.0);
+		} else if (v->pdl == PDL_LISTING && ps->expected) {
 			int pct		 = ps->got_count * 100 / ps->expected;
 			char bar[64] = "";
 			int filled	 = pct / 10;
@@ -337,7 +342,7 @@ static void draw_status(app_t *a, int *cursor_y, int *cursor_x) {
 			/* TRANSLATORS: key names (Enter, /, w, r, ...) must stay as they are */
 			ui_put(n, y, 0, avail,
 					_(" ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  "
-					  "g groups  s save  l load  v wrap  d details  t lang  ? help  q quit"));
+					  "n non-default  g groups  s save  l load  v wrap  d details  t lang  ? help  q quit"));
 		}
 		break;
 	}
@@ -438,7 +443,8 @@ static void draw_help(app_t *a) {
 			{NULL,		  N_("View"),													 false},
 			{"/",		  N_("search name & description, Esc clears"),					 false},
 			{"g",		  N_("parameter groups (as in QGroundControl), type to filter"), false},
-			{"m",		  N_("show only modified parameters"),							 false},
+			{"m",		  N_("show only parameters edited in this session"),			 false},
+			{"n",		  N_("show only parameters that differ from the default"),		 false},
 			{"f  Space",  N_("toggle favourite (favourites sort first)"),				 false},
 			{"v",		  N_("wrap rows (Mission Planner style)"),						 false},
 			{"d",		  N_("toggle the details pane"),								 false},
@@ -710,9 +716,9 @@ static void normal_key(app_t *a, uint32_t k) {
 		if (u->search.len) {
 			le_set(&u->search, "");
 			u->view_stale = true;
-		} else if (u->modified_only) {
-			u->modified_only = false;
-			u->view_stale	 = true;
+		} else if (u->modified_only || u->nondefault_only) {
+			u->modified_only = u->nondefault_only = false;
+			u->view_stale						  = true;
 		} else if (u->group_name[0]) {
 			ui_groups_clear_filter(a);
 		}
@@ -722,9 +728,21 @@ static void normal_key(app_t *a, uint32_t k) {
 		if (sel_param >= 0)
 			app_toggle_fav(a, sel_param);
 		break;
+	case 'n':
+		u->nondefault_only = !u->nondefault_only;
+		u->modified_only   = false;
+		u->view_stale	   = true;
+		if (!u->nondefault_only)
+			app_msg(a, MSG_INFO, "%s", _("Showing all parameters"));
+		else if (!ps_default_count(&a->ps))
+			app_msg(a, MSG_WARN, "%s", _("Default values are unknown for this vehicle"));
+		else
+			app_msg(a, MSG_INFO, "%s", _("Showing parameters that differ from the default (n: all)"));
+		break;
 	case 'm':
-		u->modified_only = !u->modified_only;
-		u->view_stale	 = true;
+		u->modified_only   = !u->modified_only;
+		u->nondefault_only = false;
+		u->view_stale	   = true;
 		app_msg(a, MSG_INFO, "%s", u->modified_only ? _("Showing modified parameters only (m: all)") : _("Showing all parameters"));
 		break;
 	case 'w':

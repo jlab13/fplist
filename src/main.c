@@ -37,6 +37,8 @@ static void usage(FILE *f) {
 			"      --tcp-port N      auto-detect TCP port (default 5760)\n"
 			"  -m, --meta FILE       parameter metadata (apm.pdef.xml or PX4 .json)\n"
 			"      --offline         never download metadata, use cache only\n"
+			"      --no-ftp          ArduPilot: don't download parameters via MAVFTP\n"
+			"                        (slower PARAM_REQUEST_LIST, no default values)\n"
 			"      --meta-lang LANG  PX4 metadata translation, e.g. uk_UA; en = none\n"
 			"                        (default: from LANGUAGE / LC_MESSAGES)\n"
 			"  -d, --dump            no UI: download parameters, print TSV to stdout, exit\n"
@@ -95,7 +97,7 @@ int main(int argc, char **argv) {
 	o->dump_timeout				= 90;
 	snprintf(o->meta_lang, sizeof o->meta_lang, "auto");
 
-	enum { O_GCS = 1000, O_NOSER, O_NOUDP, O_NOTCP, O_UDPP, O_TCPP, O_OFFLINE, O_LOG, O_MLANG };
+	enum { O_GCS = 1000, O_NOSER, O_NOUDP, O_NOTCP, O_UDPP, O_TCPP, O_OFFLINE, O_LOG, O_MLANG, O_NOFTP };
 	static const struct option lo[] = {
 			{"baud",	  required_argument, 0, 'b'		 },
 			{"sysid",	  required_argument, 0, 's'		 },
@@ -108,6 +110,7 @@ int main(int argc, char **argv) {
 			{"meta",	  required_argument, 0, 'm'		 },
 			{"offline",	  no_argument,		 0, O_OFFLINE},
 			{"meta-lang", required_argument, 0, O_MLANG	 },
+			{"no-ftp",	  no_argument,		 0, O_NOFTP	 },
 			{"dump",	  no_argument,		 0, 'd'		 },
 			{"timeout",	  required_argument, 0, 't'		 },
 			{"list",	  no_argument,		 0, 'l'		 },
@@ -149,6 +152,9 @@ int main(int argc, char **argv) {
 			break;
 		case O_OFFLINE:
 			o->offline = true;
+			break;
+		case O_NOFTP:
+			o->no_ftp = true;
 			break;
 		case O_MLANG:
 			/* "en" / "none" disable metadata translations */

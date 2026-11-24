@@ -32,6 +32,10 @@ typedef struct param {
 	bool fav;
 	const param_meta_t *meta; /* may be NULL */
 
+	/* default reported by the firmware (ArduPilot param.pck withdefaults) */
+	bool fw_has_default;
+	double fw_default;
+
 	/* QGC-style grouping (ps_assign_groups): category is a static or
 	 * metadata-owned string, group is copied (PX4 names or name prefix). */
 	const char *category;
@@ -67,6 +71,16 @@ int ps_find(const paramset_t *ps, const char *name); /* index or -1 */
 int ps_upsert(paramset_t *ps, const char *name, bool *created);
 
 int ps_pending_count(const paramset_t *ps);
+
+/* Default value: the firmware's (MAVFTP param.pck) when known, else the
+ * metadata's (PX4 "default"). Like QGC, the firmware value wins. */
+bool param_default(const param_t *p, double *out);
+/* Equal as the vehicle stores them (integer types exactly, floats as float). */
+bool param_values_equal(uint8_t type, double a, double b);
+/* The vehicle value is known to differ from the default. */
+bool param_is_nondefault(const param_t *p);
+/* Number of parameters with a known default (0: the filter can't work). */
+int ps_default_count(const paramset_t *ps);
 void ps_attach_meta(paramset_t *ps, const meta_db_t *db);
 
 #define PARAM_GROUP_MISC "Misc"
