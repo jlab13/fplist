@@ -23,6 +23,7 @@ typedef struct app_opts {
 	int target_sysid; /* -1: first vehicle seen */
 	uint8_t gcs_sysid, gcs_compid;
 	char meta_path[1024];
+	char meta_lang[16]; /* "auto" (from locale), "" = none, or ll_CC */
 	bool offline;
 	bool dump; /* headless: print parameters and exit */
 	double dump_timeout;

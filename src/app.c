@@ -195,6 +195,10 @@ static void maybe_start_meta(app_t *a, double now) {
 		return;
 	metafetch_req_t r = {0};
 	r.offline		  = a->opt.offline;
+	if (strcmp(a->opt.meta_lang, "auto") == 0)
+		i18n_meta_lang(r.lang, sizeof r.lang);
+	else
+		snprintf(r.lang, sizeof r.lang, "%s", a->opt.meta_lang);
 	snprintf(r.override_path, sizeof r.override_path, "%s", a->opt.meta_path);
 	r.ardupilot = v->fw != VFW_PX4;
 	if (r.ardupilot) {

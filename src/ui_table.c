@@ -51,7 +51,8 @@ static bool matches(const param_t *p, const char *f) {
 	if (str_icontains(p->name, f))
 		return true;
 	const param_meta_t *m = p->meta;
-	return m && (str_icontains(m->human, f) || str_icontains(m->desc, f));
+	/* both languages: users search in whichever they remember */
+	return m && (str_icontains(m->human, f) || str_icontains(m->desc, f) || str_icontains(m->human_tr, f) || str_icontains(m->desc_tr, f));
 }
 
 int ui_selected_param(app_t *a) {
@@ -152,14 +153,7 @@ int ui_table_height(app_t *a) {
 	return MAX(h, 1);
 }
 
-static const char *desc_text(const param_t *p) {
-	const param_meta_t *m = p->meta;
-	if (!m)
-		return "";
-	if (m->desc && *m->desc)
-		return m->desc;
-	return m->human ? m->human : "";
-}
+static const char *desc_text(const param_t *p) { return meta_desc(p->meta); }
 
 int ui_row_height(app_t *a, int pidx) {
 	ui_t *u = &a->ui;
@@ -170,7 +164,7 @@ int ui_row_height(app_t *a, int pidx) {
 	int h = 1;
 	if (p->meta) {
 		if (u->col_w[COL_OPTIONS] > 0 && p->meta->options)
-			h = MAX(h, wrap_text(p->meta->options, u->col_w[COL_OPTIONS], tmp, 0));
+			h = MAX(h, wrap_text(meta_options(p->meta), u->col_w[COL_OPTIONS], tmp, 0));
 		if (u->col_w[COL_DESC] > 0)
 			h = MAX(h, wrap_text(desc_text(p), u->col_w[COL_DESC], tmp, 0));
 	}
@@ -315,9 +309,9 @@ static void draw_row(app_t *a, int pidx, int y, int h, bool selected) {
 	if (u->col_w[COL_OPTIONS] > 0 && m && m->options) {
 		ui_rgb_fg(n, C_OPT);
 		if (h > 1)
-			put_wrapped(n, y, u->col_x[COL_OPTIONS], u->col_w[COL_OPTIONS], h, m->options);
+			put_wrapped(n, y, u->col_x[COL_OPTIONS], u->col_w[COL_OPTIONS], h, meta_options(m));
 		else
-			ui_put(n, y, u->col_x[COL_OPTIONS], u->col_w[COL_OPTIONS], m->options);
+			ui_put(n, y, u->col_x[COL_OPTIONS], u->col_w[COL_OPTIONS], meta_options(m));
 	}
 	/* Desc */
 	ncplane_set_fg_default(n);
@@ -343,7 +337,7 @@ static void bits_text(const param_meta_t *m, uint64_t bits, char *out, size_t n)
 	out[0]	   = '\0';
 	for (int i = 0; i < m->nbits; i++) {
 		if (bits & (1ULL << m->bits[i].bit))
-			len = sappendf(out, n, len, "%s%s", len ? " | " : "", m->bits[i].label);
+			len = sappendf(out, n, len, "%s%s", len ? " | " : "", meta_blabel(&m->bits[i]));
 	}
 	if (!len)
 		snprintf(out, n, "%s", _("(none)"));
@@ -388,7 +382,8 @@ static void draw_details(app_t *a, int y0) {
 	/* heading: name, human name, attributes */
 	ui_rgb_bg(n, C_HDR_BG);
 	char head[256], attrs[256];
-	snprintf(head, sizeof head, " %s%s%s", p->name, m && m->human ? " - " : "", m && m->human ? m->human : "");
+	const char *human = meta_human(m);
+	snprintf(head, sizeof head, " %s%s%s", p->name, human ? " - " : "", human ? human : "");
 	size_t al = (size_t)snprintf(attrs, sizeof attrs, "%s", param_type_name(p->type));
 	if (m && m->has_range) {
 		char lo[32], hi[32];
@@ -407,7 +402,7 @@ static void draw_details(app_t *a, int y0) {
 		al = sappendf(attrs, sizeof attrs, al, _(" · default %s"), d);
 	}
 	if (m && m->user && *m->user)
-		al = sappendf(attrs, sizeof attrs, al, " · %s", _(m->user));
+		al = sappendf(attrs, sizeof attrs, al, " · %s", meta_user_tr(m) ? meta_user_tr(m) : _(m->user));
 	if (m && m->reboot_required)
 		al = sappendf(attrs, sizeof attrs, al, "%s", _(" · reboot required"));
 	if (m && m->readonly)
@@ -442,16 +437,28 @@ static void draw_details(app_t *a, int y0) {
 	ui_put(n, y++, 0, W, line);
 	ncplane_set_fg_default(n);
 
-	/* description + options, wrapped into the remaining lines */
+	/* description (+ the English original under a translation) + options,
+	 * wrapped into the remaining lines */
 	int left		 = DETAILS_H - 2;
 	const char *desc = desc_text(p);
-	const char *opts = m && m->options && *m->options && (m->nvalues || m->nbits) ? m->options : NULL;
-	span_t dl[MAX_WRAP], ol[MAX_WRAP];
-	int ndl	  = *desc ? wrap_text(desc, W - 2, dl, MAX_WRAP) : 0;
-	int nol	  = opts ? wrap_text(opts, W - 2, ol, MAX_WRAP) : 0;
-	int dshow = MIN(ndl, opts ? MAX(left - MIN(nol, 2), 1) : left);
+	const char *opts = m && m->options && *m->options && (m->nvalues || m->nbits) ? meta_options(m) : NULL;
+	char orig[2048]	 = "";
+	if (meta_desc_translated(m))
+		snprintf(orig, sizeof orig, "EN: %s", m->desc && *m->desc ? m->desc : (m->human ? m->human : ""));
+	span_t dl[MAX_WRAP], ol[MAX_WRAP], el[MAX_WRAP];
+	int ndl = *desc ? wrap_text(desc, W - 2, dl, MAX_WRAP) : 0;
+	int nol = opts ? wrap_text(opts, W - 2, ol, MAX_WRAP) : 0;
+	int nel = orig[0] ? wrap_text(orig, W - 2, el, MAX_WRAP) : 0;
+	/* budget: options keep up to 2 lines (or what they need), the original 1+ */
+	int oshow = MIN(nol, 2);
+	int eshow = MIN(nel, nel ? 1 : 0);
+	int dshow = MIN(ndl, MAX(left - oshow - eshow, 1));
+	eshow	  = MIN(nel, MAX(left - dshow - oshow, eshow ? 1 : 0));
 	for (int i = 0; i < dshow && i < MAX_WRAP; i++)
 		ui_putn(n, y++, 1, W - 2, desc + dl[i].off, dl[i].len);
+	ui_rgb_fg(n, C_DIM);
+	for (int i = 0; i < eshow && y < y0 + DETAILS_H && i < MAX_WRAP; i++)
+		ui_putn(n, y++, 1, W - 2, orig + el[i].off, el[i].len);
 	ui_rgb_fg(n, C_OPT);
 	for (int i = 0; i < nol && y < y0 + DETAILS_H && i < MAX_WRAP; i++)
 		ui_putn(n, y++, 1, W - 2, opts + ol[i].off, ol[i].len);

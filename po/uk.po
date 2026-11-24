@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gndtui 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 23:04+0200\n"
+"POT-Creation-Date: 2026-11-24 23:26+0200\n"
 "PO-Revision-Date: 2026-11-24 23:02+0200\n"
 "Last-Translator: JLab13\n"
 "Language-Team: Ukrainian\n"
@@ -16,8 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: src/app.c:48
 #, c-format
@@ -80,36 +79,36 @@ msgstr " - натисніть w для запису"
 msgid "Connected to %s %s (sysid %u) via %s"
 msgstr "Підключено до %s %s (sysid %u) через %s"
 
-#: src/app.c:207
+#: src/app.c:211
 msgid "loading metadata..."
 msgstr "завантаження метаданих..."
 
-#: src/app.c:226
+#: src/app.c:230
 msgid "no metadata"
 msgstr "без метаданих"
 
-#: src/app.c:294
+#: src/app.c:298
 msgid "gndtui: cannot initialise the terminal\n"
 msgstr "gndtui: не вдалося ініціалізувати термінал\n"
 
-#: src/app.c:298
+#: src/app.c:302
 msgid "Searching for vehicle...\n"
 msgstr "Пошук апарата...\n"
 
-#: src/app.c:358
+#: src/app.c:362
 #, c-format
 msgid "gndtui: timeout (%s)\n"
 msgstr "gndtui: час очікування вичерпано (%s)\n"
 
-#: src/app.c:358
+#: src/app.c:362
 msgid "no vehicle found"
 msgstr "апарат не знайдено"
 
-#: src/app.c:358
+#: src/app.c:362
 msgid "parameter download"
 msgstr "завантаження параметрів"
 
-#: src/detect.c:176 src/ui.c:371
+#: src/detect.c:176 src/ui.c:374
 msgid "waiting"
 msgstr "очікування"
 
@@ -159,31 +158,26 @@ msgid ""
 "\n"
 "Terminal parameter editor for ArduPilot and PX4 (MAVLink).\n"
 "Without CONNECTION the vehicle is auto-detected like QGroundControl does:\n"
-"USB flight controllers / SiK radios, UDP :14550 and TCP 127.0.0.1:5760 "
-"(SITL).\n"
+"USB flight controllers / SiK radios, UDP :14550 and TCP 127.0.0.1:5760 (SITL).\n"
 msgstr ""
 "Використання: gndtui [опції] [ПІДКЛЮЧЕННЯ]\n"
 "\n"
 "Термінальний редактор параметрів ArduPilot і PX4 (MAVLink).\n"
 "Без ПІДКЛЮЧЕННЯ апарат шукається автоматично, як у QGroundControl:\n"
-"USB польотні контролери / SiK-радіомодеми, UDP :14550 і TCP 127.0.0.1:5760 "
-"(SITL).\n"
+"USB польотні контролери / SiK-радіомодеми, UDP :14550 і TCP 127.0.0.1:5760 (SITL).\n"
 
 #: src/main.c:22
 msgid ""
 "CONNECTION:\n"
 "  /dev/ttyACM0[:BAUD]        serial port (also serial:/dev/ttyUSB0:57600)\n"
 "  udp:[HOST:]PORT            listen for UDP (e.g. udp:14550)\n"
-"  udpout:HOST:PORT           send UDP to HOST:PORT (e.g. "
-"udpout:192.168.4.1:14550)\n"
+"  udpout:HOST:PORT           send UDP to HOST:PORT (e.g. udpout:192.168.4.1:14550)\n"
 "  tcp:[HOST:]PORT            TCP client (e.g. tcp:127.0.0.1:5760)\n"
 msgstr ""
 "ПІДКЛЮЧЕННЯ:\n"
-"  /dev/ttyACM0[:ШВИДКІСТЬ]   серійний порт (також serial:/dev/"
-"ttyUSB0:57600)\n"
+"  /dev/ttyACM0[:ШВИДКІСТЬ]   серійний порт (також serial:/dev/ttyUSB0:57600)\n"
 "  udp:[ХОСТ:]ПОРТ            слухати UDP (напр. udp:14550)\n"
-"  udpout:ХОСТ:ПОРТ           надсилати UDP на ХОСТ:ПОРТ (напр. "
-"udpout:192.168.4.1:14550)\n"
+"  udpout:ХОСТ:ПОРТ           надсилати UDP на ХОСТ:ПОРТ (напр. udpout:192.168.4.1:14550)\n"
 "  tcp:[ХОСТ:]ПОРТ            TCP-клієнт (напр. tcp:127.0.0.1:5760)\n"
 
 #: src/main.c:29
@@ -199,8 +193,9 @@ msgid ""
 "      --tcp-port N      auto-detect TCP port (default 5760)\n"
 "  -m, --meta FILE       parameter metadata (apm.pdef.xml or PX4 .json)\n"
 "      --offline         never download metadata, use cache only\n"
-"  -d, --dump            no UI: download parameters, print TSV to stdout, "
-"exit\n"
+"      --meta-lang LANG  PX4 metadata translation, e.g. uk_UA; en = none\n"
+"                        (default: from LANGUAGE / LC_MESSAGES)\n"
+"  -d, --dump            no UI: download parameters, print TSV to stdout, exit\n"
 "  -t, --timeout SEC     with --dump: give up after SEC seconds (default 90)\n"
 "  -l, --list            list serial ports and how they are classified\n"
 "      --log FILE        write a debug log\n"
@@ -218,6 +213,8 @@ msgstr ""
 "      --tcp-port N      порт TCP для автопошуку (типово 5760)\n"
 "  -m, --meta ФАЙЛ       метадані параметрів (apm.pdef.xml або PX4 .json)\n"
 "      --offline         не завантажувати метадані, лише кеш\n"
+"      --meta-lang МОВА  переклад метаданих PX4, напр. uk_UA; en = без перекладу\n"
+"                        (типово: з LANGUAGE / LC_MESSAGES)\n"
 "  -d, --dump            без UI: завантажити параметри, вивести TSV і вийти\n"
 "  -t, --timeout СЕК     з --dump: здатися через СЕК секунд (типово 90)\n"
 "  -l, --list            показати серійні порти та їх класифікацію\n"
@@ -225,91 +222,96 @@ msgstr ""
 "  -V, --version         показати версію\n"
 "  -h, --help            ця довідка\n"
 
-#: src/main.c:53
+#: src/main.c:55
 msgid "No ttyACM/ttyUSB ports found.\n"
 msgstr "Порти ttyACM/ttyUSB не знайдено.\n"
 
-#: src/main.c:59
+#: src/main.c:61
 msgid "flight controller"
 msgstr "польотний контролер"
 
-#: src/main.c:59
+#: src/main.c:61
 msgid "other"
 msgstr "інше"
 
-#: src/main.c:59
+#: src/main.c:61
 msgid "telemetry radio"
 msgstr "радіомодем"
 
-#: src/main.c:61
+#: src/main.c:63
 msgid "  (bootloader)"
 msgstr "  (завантажувач)"
 
 #. TRANSLATORS: first %s is what was expected (baud rate, port, ...)
-#: src/main.c:71
+#: src/main.c:73
 #, c-format
 msgid "gndtui: invalid %s '%s'\n"
 msgstr "gndtui: неправильне значення (%s): '%s'\n"
 
-#: src/main.c:120
+#: src/main.c:124
 msgid "baud rate"
 msgstr "швидкість"
 
-#: src/main.c:123 src/main.c:126
+#: src/main.c:127 src/main.c:130
 msgid "system id"
 msgstr "system id"
 
-#: src/main.c:138 src/main.c:141
+#: src/main.c:142 src/main.c:145
 msgid "port"
 msgstr "порт"
 
-#: src/main.c:153
+#: src/main.c:161
 msgid "timeout"
 msgstr "тайм-аут"
 
-#: src/main.c:179
+#: src/main.c:187
 msgid "gndtui: only one connection can be given\n"
 msgstr "gndtui: можна вказати лише одне підключення\n"
 
-#: src/main.c:184
+#: src/main.c:192
 msgid "gndtui: nothing to connect to (all auto-detect sources disabled)\n"
 msgstr "gndtui: немає до чого підключатися (усі джерела автопошуку вимкнено)\n"
 
-#: src/metafetch.c:97
-msgid "metadata: no cache directory (HOME unset?)"
-msgstr "метадані: немає каталогу кешу (не задано HOME?)"
-
-#: src/metafetch.c:128
+#: src/metafetch.c:81
 msgid "cached"
 msgstr "з кешу"
 
-#: src/metafetch.c:131
+#: src/metafetch.c:84
 msgid "downloaded"
 msgstr "завантажено"
 
-#: src/metafetch.c:135
+#: src/metafetch.c:88
 msgid "stale cache"
 msgstr "застарілий кеш"
 
-#: src/metafetch.c:143
+#: src/metafetch.c:121
+#, c-format
+msgid "; translation %s: %d strings"
+msgstr "; переклад %s: %d рядків"
+
+#: src/metafetch.c:140
+msgid "metadata: no cache directory (HOME unset?)"
+msgstr "метадані: немає каталогу кешу (не задано HOME?)"
+
+#: src/metafetch.c:174
 #, c-format
 msgid "metadata: %s, %d params (%s)"
 msgstr "метадані: %s, %d параметрів (%s)"
 
-#: src/metafetch.c:147
+#: src/metafetch.c:178
 #, c-format
 msgid "metadata unavailable: %s"
 msgstr "метадані недоступні: %s"
 
-#: src/metafetch.c:148
+#: src/metafetch.c:179
 msgid "offline and nothing cached"
 msgstr "офлайн, а в кеші нічого немає"
 
-#: src/metafetch.c:148
+#: src/metafetch.c:179
 msgid "unknown error"
 msgstr "невідома помилка"
 
-#: src/metafetch.c:158
+#: src/metafetch.c:191
 msgid "metadata: cannot start thread"
 msgstr "метадані: не вдалося запустити потік"
 
@@ -339,100 +341,101 @@ msgstr[0] "  │  змінено: %d"
 msgstr[1] "  │  змінено: %d"
 msgstr[2] "  │  змінено: %d"
 
-#: src/ui.c:171
+#: src/ui.c:174
 msgid " ○ NO LINK "
 msgstr " ○ НЕМАЄ ЗВ'ЯЗКУ "
 
-#: src/ui.c:171
+#: src/ui.c:174
 msgid " ● LINK "
 msgstr " ● ЗВ'ЯЗОК "
 
-#: src/ui.c:245
+#: src/ui.c:248
 msgid " Search: "
 msgstr " Пошук: "
 
-#: src/ui.c:249
+#: src/ui.c:252
 msgid "  Enter: keep  Esc: clear"
 msgstr "  Enter: залишити  Esc: очистити"
 
-#: src/ui.c:283
+#: src/ui.c:286
 #, c-format
 msgid "range %s..%s%s%s  "
 msgstr "діапазон %s..%s%s%s  "
 
-#: src/ui.c:285
+#: src/ui.c:288
 msgid "Enter: set  Esc: cancel"
 msgstr "Enter: встановити  Esc: скасувати"
 
-#: src/ui.c:286
+#: src/ui.c:289
 msgid "  Tab: list"
 msgstr "  Tab: список"
 
-#: src/ui.c:292
+#: src/ui.c:295
 msgid " Load from: "
 msgstr " Завантажити з: "
 
-#: src/ui.c:292
+#: src/ui.c:295
 msgid " Save to: "
 msgstr " Зберегти в: "
 
-#: src/ui.c:297
+#: src/ui.c:300
 msgid "  Enter: ok  Esc: cancel"
 msgstr "  Enter: ок  Esc: скасувати"
 
 #. TRANSLATORS: the answer keys stay y / n
-#: src/ui.c:311
+#: src/ui.c:314
 #, c-format
 msgid " %s  [y/n]"
 msgstr " %s  [y/n]"
 
-#: src/ui.c:324
+#: src/ui.c:327
 msgid " q: quit"
 msgstr " q: вихід"
 
-#: src/ui.c:328
+#: src/ui.c:331
 msgid ""
 " ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  s "
-"save  l load  v wrap  d details  ? help  q quit"
+"save  l load  v wrap  d details  t lang  ? help  q quit"
 msgstr ""
-" ↑↓ рух  Enter змінити  / пошук  w записати  r оновити  f обране  m змінені  "
-"s зберегти  l завантажити  v перенос  d деталі  ? довідка  q вихід"
+" ↑↓ рух  Enter змінити  / пошук  w записати  r оновити  f обране  m змінені"
+"  s зберегти  l завантажити  v перенос  d деталі  t мова  ? довідка  q вихід"
 
-#: src/ui.c:352
+#: src/ui.c:355
 msgid "Connecting:"
 msgstr "Підключення:"
 
-#: src/ui.c:352
+#: src/ui.c:355
 msgid "Looking for a vehicle on these connections:"
 msgstr "Пошук апарата на цих з'єднаннях:"
 
-#: src/ui.c:359
+#: src/ui.c:362
 msgid "Connection"
 msgstr "З'єднання"
 
-#: src/ui.c:360
+#: src/ui.c:363
 msgid "Status"
 msgstr "Стан"
 
-#: src/ui.c:378
+#: src/ui.c:381
 #, c-format
 msgid " %llu msgs"
 msgstr " %llu повідомл."
 
-#: src/ui.c:390
+#: src/ui.c:393
 msgid "(no candidate ports yet - plug in a flight controller)"
 msgstr "(портів поки немає - підключіть польотний контролер)"
 
-#: src/ui.c:395
-msgid "Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"
+#: src/ui.c:398
+msgid ""
+"Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"
 msgstr ""
 "Автопошук (як у QGroundControl): USB польотні контролери та SiK-радіомодеми,"
 
-#: src/ui.c:396
+#: src/ui.c:399
 msgid "UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."
 msgstr "прослуховування UDP :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."
 
-#: src/ui.c:397
+#: src/ui.c:400
 msgid ""
 "Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui "
 "tcp:host:5760"
@@ -440,100 +443,104 @@ msgstr ""
 "Примусове підключення:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui "
 "tcp:host:5760"
 
-#: src/ui.c:417
+#: src/ui.c:420
 msgid "Navigation"
 msgstr "Навігація"
 
-#: src/ui.c:418
+#: src/ui.c:421
 msgid "move"
 msgstr "рух"
 
-#: src/ui.c:419
+#: src/ui.c:422
 msgid "page"
 msgstr "сторінка"
 
-#: src/ui.c:420
+#: src/ui.c:423
 msgid "first / last"
 msgstr "перший / останній"
 
-#: src/ui.c:421
+#: src/ui.c:424
 msgid "click, wheel, double click to edit"
 msgstr "клік, колесо, подвійний клік - редагувати"
 
-#: src/ui.c:421
+#: src/ui.c:424
 msgid "mouse"
 msgstr "миша"
 
-#: src/ui.c:422
+#: src/ui.c:425
 msgid "Editing"
 msgstr "Редагування"
 
-#: src/ui.c:423
+#: src/ui.c:426
 msgid "edit value (list / bitmask editor if known)"
 msgstr "змінити значення (список / бітова маска, якщо відомі)"
 
-#: src/ui.c:424
+#: src/ui.c:427
 msgid "undo edit of this / all parameters"
 msgstr "скасувати зміну цього / всіх параметрів"
 
-#: src/ui.c:425
+#: src/ui.c:428
 msgid "write modified parameters to the vehicle"
 msgstr "записати змінені параметри в апарат"
 
-#: src/ui.c:426
+#: src/ui.c:429
 msgid "refresh (re-download) all parameters"
 msgstr "оновити (перечитати) всі параметри"
 
-#: src/ui.c:427
+#: src/ui.c:430
 msgid "View"
 msgstr "Вигляд"
 
-#: src/ui.c:428
+#: src/ui.c:431
 msgid "search name & description, Esc clears"
 msgstr "пошук за назвою та описом, Esc очищає"
 
-#: src/ui.c:429
+#: src/ui.c:432
 msgid "show only modified parameters"
 msgstr "лише змінені параметри"
 
-#: src/ui.c:430
+#: src/ui.c:433
 msgid "toggle favourite (favourites sort first)"
 msgstr "обране (обране показується першим)"
 
-#: src/ui.c:431
+#: src/ui.c:434
 msgid "wrap rows (Mission Planner style)"
 msgstr "перенос рядків (як у Mission Planner)"
 
-#: src/ui.c:432
+#: src/ui.c:435
 msgid "toggle the details pane"
 msgstr "панель деталей"
 
-#: src/ui.c:433
+#: src/ui.c:436
+msgid "descriptions: translation / original English"
+msgstr "описи: переклад / англійський оригінал"
+
+#: src/ui.c:437
 msgid "Files"
 msgstr "Файли"
 
-#: src/ui.c:434
+#: src/ui.c:438
 msgid "save parameters (Mission Planner .param)"
 msgstr "зберегти параметри (.param Mission Planner)"
 
-#: src/ui.c:435
+#: src/ui.c:439
 msgid "load parameters from file (become edits)"
 msgstr "завантажити параметри з файлу (як зміни)"
 
-#: src/ui.c:437
+#: src/ui.c:441
 msgid "quit"
 msgstr "вихід"
 
-#: src/ui.c:446
+#: src/ui.c:450
 #, c-format
 msgid "gndtui %s - keys"
 msgstr "gndtui %s - клавіші"
 
-#: src/ui.c:482
+#: src/ui.c:486
 msgid "terminal too small"
 msgstr "термінал замалий"
 
-#: src/ui.c:568
+#: src/ui.c:572
 #, c-format
 msgid "%d parameter edit not written to the vehicle. Quit anyway?"
 msgid_plural "%d parameter edits not written to the vehicle. Quit anyway?"
@@ -541,24 +548,38 @@ msgstr[0] "%d зміну параметра не записано в апара�
 msgstr[1] "%d зміни параметрів не записано в апарат. Все одно вийти?"
 msgstr[2] "%d змін параметрів не записано в апарат. Все одно вийти?"
 
-#: src/ui.c:704
+#: src/ui.c:708
 msgid "Showing all parameters"
 msgstr "Показано всі параметри"
 
-#: src/ui.c:704
+#: src/ui.c:708
 msgid "Showing modified parameters only (m: all)"
 msgstr "Показано лише змінені параметри (m: усі)"
 
-#: src/ui.c:717
+#: src/ui.c:721
 #, c-format
 msgid "Reverted %s"
 msgstr "Скасовано зміну %s"
 
-#: src/ui.c:722
+#: src/ui.c:726
 msgid "Discard all parameter edits?"
 msgstr "Скасувати всі зміни параметрів?"
 
-#: src/ui.c:802
+#: src/ui.c:738
+msgid "No translation of the parameter descriptions is available"
+msgstr "Перекладу описів параметрів немає"
+
+#: src/ui.c:744
+#, c-format
+msgid "Parameter descriptions: original English%s"
+msgstr "Описи параметрів: англійський оригінал%s"
+
+#: src/ui.c:744
+#, c-format
+msgid "Parameter descriptions: translation (%s)"
+msgstr "Описи параметрів: переклад (%s)"
+
+#: src/ui.c:817
 #, c-format
 msgid "Discarded %d edit"
 msgid_plural "Discarded %d edits"
@@ -604,22 +625,23 @@ msgstr "діапазон %s: %s..%s"
 #, c-format
 msgid "outside recommended range %s..%s - Enter again to set anyway"
 msgstr ""
-"поза рекомендованим діапазоном %s..%s - Enter ще раз, щоб все одно встановити"
+"поза рекомендованим діапазоном %s..%s - Enter ще раз, щоб все одно "
+"встановити"
 
-#: src/ui_edit.c:390
+#: src/ui_edit.c:391
 msgid "Enter select · Tab type a value · Esc cancel"
 msgstr "Enter вибрати · Tab ввести значення · Esc скасувати"
 
-#: src/ui_edit.c:390
+#: src/ui_edit.c:391
 msgid "Space toggle · a all · n none · Enter set · Tab type · Esc"
 msgstr ""
 "Space перемкнути · a усі · n жодного · Enter встановити · Tab ввести · Esc"
 
-#: src/ui_edit.c:426
+#: src/ui_edit.c:428
 msgid "   ← current"
 msgstr "   ← поточне"
 
-#: src/ui_edit.c:437
+#: src/ui_edit.c:439
 #, c-format
 msgid " value = %llu   %s"
 msgstr " значення = %llu   %s"
@@ -644,7 +666,8 @@ msgstr "Системний"
 msgid "User"
 msgstr "Користувач"
 
-#. TRANSLATORS: table column titles. Widths: Command 14, Value 12, Units 8, Fav 3 columns.
+#. TRANSLATORS: table column titles. Widths: Command 14, Value 12, Units 8,
+#. Fav 3 columns.
 #: src/ui_table.c:21
 msgid "Command"
 msgstr "Параметр"
@@ -669,76 +692,76 @@ msgstr "Одиниці"
 msgid "Value"
 msgstr "Значення"
 
-#: src/ui_table.c:349
+#: src/ui_table.c:343
 msgid "(none)"
 msgstr "(жодного)"
 
-#: src/ui_table.c:397
+#: src/ui_table.c:392
 #, c-format
 msgid " · range %s..%s"
 msgstr " · діапазон %s..%s"
 
-#: src/ui_table.c:402
+#: src/ui_table.c:397
 #, c-format
 msgid " · step %s"
 msgstr " · крок %s"
 
-#: src/ui_table.c:407
+#: src/ui_table.c:402
 #, c-format
 msgid " · default %s"
 msgstr " · типово %s"
 
-#: src/ui_table.c:412
+#: src/ui_table.c:407
 msgid " · reboot required"
 msgstr " · потрібне перезавантаження"
 
-#: src/ui_table.c:414
+#: src/ui_table.c:409
 msgid " · read-only"
 msgstr " · лише читання"
 
-#: src/ui_table.c:434
+#: src/ui_table.c:429
 #, c-format
 msgid " Vehicle: %s   →   new: %s%s"
 msgstr " В апараті: %s   →   нове: %s%s"
 
-#: src/ui_table.c:435
+#: src/ui_table.c:430
 msgid "  (writing...)"
 msgstr "  (запис...)"
 
-#: src/ui_table.c:436
+#: src/ui_table.c:431
 msgid "  (write FAILED)"
 msgstr "  (ПОМИЛКА запису)"
 
-#: src/ui_table.c:437
+#: src/ui_table.c:432
 msgid "  (not written - press w)"
 msgstr "  (не записано - натисніть w)"
 
-#: src/ui_table.c:440
+#: src/ui_table.c:435
 #, c-format
 msgid " Value: %s"
 msgstr " Значення: %s"
 
-#: src/ui_table.c:460
+#: src/ui_table.c:467
 msgid "(metadata loading...)"
 msgstr "(завантаження метаданих...)"
 
-#: src/ui_table.c:460
+#: src/ui_table.c:467
 msgid "(no metadata for this parameter)"
 msgstr "(для цього параметра немає метаданих)"
 
-#: src/ui_table.c:500
+#: src/ui_table.c:507
 msgid "Downloading parameters..."
 msgstr "Завантаження параметрів..."
 
-#: src/ui_table.c:500
+#: src/ui_table.c:507
 msgid "No parameters received."
 msgstr "Параметри не отримано."
 
-#: src/ui_table.c:502
+#: src/ui_table.c:509
 msgid "No modified parameters (m: show all)."
 msgstr "Змінених параметрів немає (m: показати всі)."
 
-#: src/ui_table.c:504
+#: src/ui_table.c:511
 #, c-format
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr "Немає параметрів за запитом «%s» (Esc очищає пошук)."

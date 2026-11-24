@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gndtui 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-24 23:04+0200\n"
+"POT-Creation-Date: 2026-11-24 23:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,36 +76,36 @@ msgstr ""
 msgid "Connected to %s %s (sysid %u) via %s"
 msgstr ""
 
-#: src/app.c:207
+#: src/app.c:211
 msgid "loading metadata..."
 msgstr ""
 
-#: src/app.c:226
+#: src/app.c:230
 msgid "no metadata"
 msgstr ""
 
-#: src/app.c:294
+#: src/app.c:298
 msgid "gndtui: cannot initialise the terminal\n"
 msgstr ""
 
-#: src/app.c:298
+#: src/app.c:302
 msgid "Searching for vehicle...\n"
 msgstr ""
 
-#: src/app.c:358
+#: src/app.c:362
 #, c-format
 msgid "gndtui: timeout (%s)\n"
 msgstr ""
 
-#: src/app.c:358
+#: src/app.c:362
 msgid "no vehicle found"
 msgstr ""
 
-#: src/app.c:358
+#: src/app.c:362
 msgid "parameter download"
 msgstr ""
 
-#: src/detect.c:176 src/ui.c:371
+#: src/detect.c:176 src/ui.c:374
 msgid "waiting"
 msgstr ""
 
@@ -182,6 +182,8 @@ msgid ""
 "      --tcp-port N      auto-detect TCP port (default 5760)\n"
 "  -m, --meta FILE       parameter metadata (apm.pdef.xml or PX4 .json)\n"
 "      --offline         never download metadata, use cache only\n"
+"      --meta-lang LANG  PX4 metadata translation, e.g. uk_UA; en = none\n"
+"                        (default: from LANGUAGE / LC_MESSAGES)\n"
 "  -d, --dump            no UI: download parameters, print TSV to stdout, "
 "exit\n"
 "  -t, --timeout SEC     with --dump: give up after SEC seconds (default 90)\n"
@@ -191,91 +193,96 @@ msgid ""
 "  -h, --help            this help\n"
 msgstr ""
 
-#: src/main.c:53
+#: src/main.c:55
 msgid "No ttyACM/ttyUSB ports found.\n"
 msgstr ""
 
-#: src/main.c:59
+#: src/main.c:61
 msgid "flight controller"
 msgstr ""
 
-#: src/main.c:59
+#: src/main.c:61
 msgid "other"
 msgstr ""
 
-#: src/main.c:59
+#: src/main.c:61
 msgid "telemetry radio"
 msgstr ""
 
-#: src/main.c:61
+#: src/main.c:63
 msgid "  (bootloader)"
 msgstr ""
 
 #. TRANSLATORS: first %s is what was expected (baud rate, port, ...)
-#: src/main.c:71
+#: src/main.c:73
 #, c-format
 msgid "gndtui: invalid %s '%s'\n"
 msgstr ""
 
-#: src/main.c:120
+#: src/main.c:124
 msgid "baud rate"
 msgstr ""
 
-#: src/main.c:123 src/main.c:126
+#: src/main.c:127 src/main.c:130
 msgid "system id"
 msgstr ""
 
-#: src/main.c:138 src/main.c:141
+#: src/main.c:142 src/main.c:145
 msgid "port"
 msgstr ""
 
-#: src/main.c:153
+#: src/main.c:161
 msgid "timeout"
 msgstr ""
 
-#: src/main.c:179
+#: src/main.c:187
 msgid "gndtui: only one connection can be given\n"
 msgstr ""
 
-#: src/main.c:184
+#: src/main.c:192
 msgid "gndtui: nothing to connect to (all auto-detect sources disabled)\n"
 msgstr ""
 
-#: src/metafetch.c:97
-msgid "metadata: no cache directory (HOME unset?)"
-msgstr ""
-
-#: src/metafetch.c:128
+#: src/metafetch.c:81
 msgid "cached"
 msgstr ""
 
-#: src/metafetch.c:131
+#: src/metafetch.c:84
 msgid "downloaded"
 msgstr ""
 
-#: src/metafetch.c:135
+#: src/metafetch.c:88
 msgid "stale cache"
 msgstr ""
 
-#: src/metafetch.c:143
+#: src/metafetch.c:121
+#, c-format
+msgid "; translation %s: %d strings"
+msgstr ""
+
+#: src/metafetch.c:140
+msgid "metadata: no cache directory (HOME unset?)"
+msgstr ""
+
+#: src/metafetch.c:174
 #, c-format
 msgid "metadata: %s, %d params (%s)"
 msgstr ""
 
-#: src/metafetch.c:147
+#: src/metafetch.c:178
 #, c-format
 msgid "metadata unavailable: %s"
 msgstr ""
 
-#: src/metafetch.c:148
+#: src/metafetch.c:179
 msgid "offline and nothing cached"
 msgstr ""
 
-#: src/metafetch.c:148
+#: src/metafetch.c:179
 msgid "unknown error"
 msgstr ""
 
-#: src/metafetch.c:158
+#: src/metafetch.c:191
 msgid "metadata: cannot start thread"
 msgstr ""
 
@@ -304,220 +311,238 @@ msgid_plural "  │  %d modified"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui.c:171
+#: src/ui.c:174
 msgid " ○ NO LINK "
 msgstr ""
 
-#: src/ui.c:171
+#: src/ui.c:174
 msgid " ● LINK "
 msgstr ""
 
-#: src/ui.c:245
+#: src/ui.c:248
 msgid " Search: "
 msgstr ""
 
-#: src/ui.c:249
+#: src/ui.c:252
 msgid "  Enter: keep  Esc: clear"
 msgstr ""
 
-#: src/ui.c:283
+#: src/ui.c:286
 #, c-format
 msgid "range %s..%s%s%s  "
 msgstr ""
 
-#: src/ui.c:285
+#: src/ui.c:288
 msgid "Enter: set  Esc: cancel"
 msgstr ""
 
-#: src/ui.c:286
+#: src/ui.c:289
 msgid "  Tab: list"
 msgstr ""
 
-#: src/ui.c:292
+#: src/ui.c:295
 msgid " Load from: "
 msgstr ""
 
-#: src/ui.c:292
+#: src/ui.c:295
 msgid " Save to: "
 msgstr ""
 
-#: src/ui.c:297
+#: src/ui.c:300
 msgid "  Enter: ok  Esc: cancel"
 msgstr ""
 
 #. TRANSLATORS: the answer keys stay y / n
-#: src/ui.c:311
+#: src/ui.c:314
 #, c-format
 msgid " %s  [y/n]"
 msgstr ""
 
-#: src/ui.c:324
+#: src/ui.c:327
 msgid " q: quit"
 msgstr ""
 
-#: src/ui.c:328
+#: src/ui.c:331
 msgid ""
 " ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  s "
-"save  l load  v wrap  d details  ? help  q quit"
+"save  l load  v wrap  d details  t lang  ? help  q quit"
 msgstr ""
 
-#: src/ui.c:352
+#: src/ui.c:355
 msgid "Connecting:"
 msgstr ""
 
-#: src/ui.c:352
+#: src/ui.c:355
 msgid "Looking for a vehicle on these connections:"
 msgstr ""
 
-#: src/ui.c:359
+#: src/ui.c:362
 msgid "Connection"
 msgstr ""
 
-#: src/ui.c:360
+#: src/ui.c:363
 msgid "Status"
 msgstr ""
 
-#: src/ui.c:378
+#: src/ui.c:381
 #, c-format
 msgid " %llu msgs"
 msgstr ""
 
-#: src/ui.c:390
+#: src/ui.c:393
 msgid "(no candidate ports yet - plug in a flight controller)"
 msgstr ""
 
-#: src/ui.c:395
+#: src/ui.c:398
 msgid "Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"
 msgstr ""
 
-#: src/ui.c:396
+#: src/ui.c:399
 msgid "UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."
 msgstr ""
 
-#: src/ui.c:397
+#: src/ui.c:400
 msgid ""
 "Force a connection:  gndtui /dev/ttyACM0   gndtui udp:14550   gndtui "
 "tcp:host:5760"
 msgstr ""
 
-#: src/ui.c:417
+#: src/ui.c:420
 msgid "Navigation"
 msgstr ""
 
-#: src/ui.c:418
+#: src/ui.c:421
 msgid "move"
 msgstr ""
 
-#: src/ui.c:419
+#: src/ui.c:422
 msgid "page"
 msgstr ""
 
-#: src/ui.c:420
+#: src/ui.c:423
 msgid "first / last"
 msgstr ""
 
-#: src/ui.c:421
+#: src/ui.c:424
 msgid "click, wheel, double click to edit"
 msgstr ""
 
-#: src/ui.c:421
+#: src/ui.c:424
 msgid "mouse"
 msgstr ""
 
-#: src/ui.c:422
+#: src/ui.c:425
 msgid "Editing"
 msgstr ""
 
-#: src/ui.c:423
+#: src/ui.c:426
 msgid "edit value (list / bitmask editor if known)"
 msgstr ""
 
-#: src/ui.c:424
+#: src/ui.c:427
 msgid "undo edit of this / all parameters"
 msgstr ""
 
-#: src/ui.c:425
+#: src/ui.c:428
 msgid "write modified parameters to the vehicle"
 msgstr ""
 
-#: src/ui.c:426
+#: src/ui.c:429
 msgid "refresh (re-download) all parameters"
 msgstr ""
 
-#: src/ui.c:427
+#: src/ui.c:430
 msgid "View"
 msgstr ""
 
-#: src/ui.c:428
+#: src/ui.c:431
 msgid "search name & description, Esc clears"
 msgstr ""
 
-#: src/ui.c:429
+#: src/ui.c:432
 msgid "show only modified parameters"
 msgstr ""
 
-#: src/ui.c:430
+#: src/ui.c:433
 msgid "toggle favourite (favourites sort first)"
 msgstr ""
 
-#: src/ui.c:431
+#: src/ui.c:434
 msgid "wrap rows (Mission Planner style)"
 msgstr ""
 
-#: src/ui.c:432
+#: src/ui.c:435
 msgid "toggle the details pane"
 msgstr ""
 
-#: src/ui.c:433
-msgid "Files"
-msgstr ""
-
-#: src/ui.c:434
-msgid "save parameters (Mission Planner .param)"
-msgstr ""
-
-#: src/ui.c:435
-msgid "load parameters from file (become edits)"
+#: src/ui.c:436
+msgid "descriptions: translation / original English"
 msgstr ""
 
 #: src/ui.c:437
+msgid "Files"
+msgstr ""
+
+#: src/ui.c:438
+msgid "save parameters (Mission Planner .param)"
+msgstr ""
+
+#: src/ui.c:439
+msgid "load parameters from file (become edits)"
+msgstr ""
+
+#: src/ui.c:441
 msgid "quit"
 msgstr ""
 
-#: src/ui.c:446
+#: src/ui.c:450
 #, c-format
 msgid "gndtui %s - keys"
 msgstr ""
 
-#: src/ui.c:482
+#: src/ui.c:486
 msgid "terminal too small"
 msgstr ""
 
-#: src/ui.c:568
+#: src/ui.c:572
 #, c-format
 msgid "%d parameter edit not written to the vehicle. Quit anyway?"
 msgid_plural "%d parameter edits not written to the vehicle. Quit anyway?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui.c:704
+#: src/ui.c:708
 msgid "Showing all parameters"
 msgstr ""
 
-#: src/ui.c:704
+#: src/ui.c:708
 msgid "Showing modified parameters only (m: all)"
 msgstr ""
 
-#: src/ui.c:717
+#: src/ui.c:721
 #, c-format
 msgid "Reverted %s"
 msgstr ""
 
-#: src/ui.c:722
+#: src/ui.c:726
 msgid "Discard all parameter edits?"
 msgstr ""
 
-#: src/ui.c:802
+#: src/ui.c:738
+msgid "No translation of the parameter descriptions is available"
+msgstr ""
+
+#: src/ui.c:744
+#, c-format
+msgid "Parameter descriptions: original English%s"
+msgstr ""
+
+#: src/ui.c:744
+#, c-format
+msgid "Parameter descriptions: translation (%s)"
+msgstr ""
+
+#: src/ui.c:817
 #, c-format
 msgid "Discarded %d edit"
 msgid_plural "Discarded %d edits"
@@ -563,19 +588,19 @@ msgstr ""
 msgid "outside recommended range %s..%s - Enter again to set anyway"
 msgstr ""
 
-#: src/ui_edit.c:390
+#: src/ui_edit.c:391
 msgid "Enter select · Tab type a value · Esc cancel"
 msgstr ""
 
-#: src/ui_edit.c:390
+#: src/ui_edit.c:391
 msgid "Space toggle · a all · n none · Enter set · Tab type · Esc"
 msgstr ""
 
-#: src/ui_edit.c:426
+#: src/ui_edit.c:428
 msgid "   ← current"
 msgstr ""
 
-#: src/ui_edit.c:437
+#: src/ui_edit.c:439
 #, c-format
 msgid " value = %llu   %s"
 msgstr ""
@@ -625,76 +650,76 @@ msgstr ""
 msgid "Value"
 msgstr ""
 
-#: src/ui_table.c:349
+#: src/ui_table.c:343
 msgid "(none)"
 msgstr ""
 
-#: src/ui_table.c:397
+#: src/ui_table.c:392
 #, c-format
 msgid " · range %s..%s"
 msgstr ""
 
-#: src/ui_table.c:402
+#: src/ui_table.c:397
 #, c-format
 msgid " · step %s"
 msgstr ""
 
-#: src/ui_table.c:407
+#: src/ui_table.c:402
 #, c-format
 msgid " · default %s"
 msgstr ""
 
-#: src/ui_table.c:412
+#: src/ui_table.c:407
 msgid " · reboot required"
 msgstr ""
 
-#: src/ui_table.c:414
+#: src/ui_table.c:409
 msgid " · read-only"
 msgstr ""
 
-#: src/ui_table.c:434
+#: src/ui_table.c:429
 #, c-format
 msgid " Vehicle: %s   →   new: %s%s"
 msgstr ""
 
-#: src/ui_table.c:435
+#: src/ui_table.c:430
 msgid "  (writing...)"
 msgstr ""
 
-#: src/ui_table.c:436
+#: src/ui_table.c:431
 msgid "  (write FAILED)"
 msgstr ""
 
-#: src/ui_table.c:437
+#: src/ui_table.c:432
 msgid "  (not written - press w)"
 msgstr ""
 
-#: src/ui_table.c:440
+#: src/ui_table.c:435
 #, c-format
 msgid " Value: %s"
 msgstr ""
 
-#: src/ui_table.c:460
+#: src/ui_table.c:467
 msgid "(metadata loading...)"
 msgstr ""
 
-#: src/ui_table.c:460
+#: src/ui_table.c:467
 msgid "(no metadata for this parameter)"
 msgstr ""
 
-#: src/ui_table.c:500
+#: src/ui_table.c:507
 msgid "Downloading parameters..."
 msgstr ""
 
-#: src/ui_table.c:500
+#: src/ui_table.c:507
 msgid "No parameters received."
 msgstr ""
 
-#: src/ui_table.c:502
+#: src/ui_table.c:509
 msgid "No modified parameters (m: show all)."
 msgstr ""
 
-#: src/ui_table.c:504
+#: src/ui_table.c:511
 #, c-format
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr ""

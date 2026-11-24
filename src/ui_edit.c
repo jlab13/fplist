@@ -382,9 +382,10 @@ void ui_draw_popup(app_t *a) {
 
 	int maxw = 0;
 	for (int i = 0; i < count; i++)
-		maxw = MAX(maxw, utf8_width(bits ? m->bits[i].label : m->values[i].label));
+		maxw = MAX(maxw, utf8_width(bits ? meta_blabel(&m->bits[i]) : meta_vlabel(&m->values[i])));
 	char title[128];
-	snprintf(title, sizeof title, "%s%s%s", p->name, m->human ? " - " : "", m->human ? m->human : "");
+	const char *human = meta_human(m);
+	snprintf(title, sizeof title, "%s%s%s", p->name, human ? " - " : "", human ? human : "");
 	/* TRANSLATORS: key names (Space, a, n, Enter, Tab, Esc) must stay as they are */
 	const char *foot =
 			bits ? _("Space toggle · a all · n none · Enter set · Tab type · Esc") : _("Enter select · Tab type a value · Esc cancel");
@@ -416,14 +417,15 @@ void ui_draw_popup(app_t *a) {
 		char line[512];
 		if (bits) {
 			bool on = (u->bits >> m->bits[i].bit) & 1;
-			snprintf(line, sizeof line, " %s %2d  %s", on ? "[x]" : "[ ]", m->bits[i].bit, m->bits[i].label);
+			snprintf(line, sizeof line, " %s %2d  %s", on ? "[x]" : "[ ]", m->bits[i].bit, meta_blabel(&m->bits[i]));
 			if (on)
 				ui_rgb_fg(n, C_PENDING);
 		} else {
 			char code[32];
 			fmt_number(m->values[i].code, false, code, sizeof code);
 			bool is_cur = fabs(m->values[i].code - vehicle_v) < 1e-6;
-			snprintf(line, sizeof line, " %s %6s  %s%s", sel ? "▶" : " ", code, m->values[i].label, is_cur ? _("   ← current") : "");
+			snprintf(line, sizeof line, " %s %6s  %s%s", sel ? "▶" : " ", code, meta_vlabel(&m->values[i]),
+					is_cur ? _("   ← current") : "");
 			if (is_cur)
 				ui_rgb_fg(n, C_OK);
 		}

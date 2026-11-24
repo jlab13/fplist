@@ -5,6 +5,8 @@
  * Built without NLS (-DGNDTUI_NLS=OFF) these collapse to the English text. */
 #pragma once
 
+#include <stddef.h>
+
 #ifdef GNDTUI_NLS
 #include <libintl.h>
 #define _(s) gettext(s)
@@ -18,3 +20,7 @@
  * then next to the executable (build tree: <exe dir>/locale), then in the
  * install prefix. Call after setlocale(). */
 void i18n_init(void);
+
+/* Language for parameter metadata translations, as "ll_CC" (PX4 file naming),
+ * derived from $LANGUAGE / LC_MESSAGES. Empty for C/POSIX/English. */
+void i18n_meta_lang(char *out, size_t n);

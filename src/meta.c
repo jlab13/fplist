@@ -51,11 +51,21 @@ static void meta_free_one(param_meta_t *m) {
 	free(m->units);
 	free(m->user);
 	free(m->options);
-	for (int i = 0; i < m->nvalues; i++)
+	free(m->src_long);
+	free(m->human_tr);
+	free(m->long_tr);
+	free(m->desc_tr);
+	free(m->options_tr);
+	free(m->user_tr);
+	for (int i = 0; i < m->nvalues; i++) {
 		free(m->values[i].label);
+		free(m->values[i].label_tr);
+	}
 	free(m->values);
-	for (int i = 0; i < m->nbits; i++)
+	for (int i = 0; i < m->nbits; i++) {
 		free(m->bits[i].label);
+		free(m->bits[i].label_tr);
+	}
 	free(m->bits);
 	free(m);
 }
@@ -111,12 +121,13 @@ const char *meta_value_label(const param_meta_t *m, double v) {
 		return NULL;
 	for (int i = 0; i < m->nvalues; i++)
 		if (fabs(m->values[i].code - v) < 1e-6)
-			return m->values[i].label;
+			return meta_vlabel(&m->values[i]);
 	return NULL;
 }
 
 static void add_value(param_meta_t *m, double code, const char *label) {
-	m->values					= xrealloc(m->values, (size_t)(m->nvalues + 1) * sizeof *m->values);
+	m->values = xrealloc(m->values, (size_t)(m->nvalues + 1) * sizeof *m->values);
+	memset(&m->values[m->nvalues], 0, sizeof m->values[0]);
 	m->values[m->nvalues].code	= code;
 	m->values[m->nvalues].label = xstrdup(label);
 	m->nvalues++;
@@ -125,43 +136,63 @@ static void add_value(param_meta_t *m, double code, const char *label) {
 static void add_bit(param_meta_t *m, int bit, const char *label) {
 	if (bit < 0 || bit > 63)
 		return;
-	m->bits					= xrealloc(m->bits, (size_t)(m->nbits + 1) * sizeof *m->bits);
+	m->bits = xrealloc(m->bits, (size_t)(m->nbits + 1) * sizeof *m->bits);
+	memset(&m->bits[m->nbits], 0, sizeof m->bits[0]);
 	m->bits[m->nbits].bit	= bit;
 	m->bits[m->nbits].label = xstrdup(label);
 	m->nbits++;
 }
 
-/* Builds the Mission Planner style "Options" text. */
-static void finalize(param_meta_t *m) {
-	if (m->desc)
-		str_squash_ws(m->desc);
-	if (m->human)
-		str_squash_ws(m->human);
-
+/* Mission Planner style "Options" column text, from English or translated labels. */
+static char *build_options(const param_meta_t *m, bool tr) {
 	size_t cap = 64, len = 0;
 	for (int i = 0; i < m->nvalues; i++)
-		cap += strlen(m->values[i].label) + 24;
+		cap += strlen(tr && m->values[i].label_tr ? m->values[i].label_tr : m->values[i].label) + 24;
 	for (int i = 0; i < m->nbits; i++)
-		cap += strlen(m->bits[i].label) + 24;
+		cap += strlen(tr && m->bits[i].label_tr ? m->bits[i].label_tr : m->bits[i].label) + 24;
 	char *s = xmalloc(cap);
 	s[0]	= '\0';
 	char num[32];
 	if (m->nvalues) {
 		for (int i = 0; i < m->nvalues; i++) {
+			const char *l = tr && m->values[i].label_tr ? m->values[i].label_tr : m->values[i].label;
 			fmt_number(m->values[i].code, false, num, sizeof num);
-			len = sappendf(s, cap, len, "%s%s:%s", i ? " " : "", num, m->values[i].label);
+			len = sappendf(s, cap, len, "%s%s:%s", i ? " " : "", num, l);
 		}
 	} else if (m->nbits) {
 		len = sappendf(s, cap, len, "Bitmask");
-		for (int i = 0; i < m->nbits; i++)
-			len = sappendf(s, cap, len, " %d:%s", m->bits[i].bit, m->bits[i].label);
+		for (int i = 0; i < m->nbits; i++) {
+			const char *l = tr && m->bits[i].label_tr ? m->bits[i].label_tr : m->bits[i].label;
+			len			  = sappendf(s, cap, len, " %d:%s", m->bits[i].bit, l);
+		}
 	} else if (m->has_range) {
 		char a[32], b[32];
 		fmt_number(m->min, false, a, sizeof a);
 		fmt_number(m->max, false, b, sizeof b);
 		snprintf(s, cap, "%s %s", a, b);
 	}
-	m->options = s;
+	return s;
+}
+
+static void finalize(param_meta_t *m) {
+	if (m->desc)
+		str_squash_ws(m->desc);
+	if (m->human)
+		str_squash_ws(m->human);
+	m->options = build_options(m, false);
+}
+
+/* PX4: "shortDesc. longDesc" */
+static char *compose_desc(const char *sd, const char *ld) {
+	if (sd && ld && *ld) {
+		size_t n  = strlen(sd) + strlen(ld) + 4;
+		char *d	  = xmalloc(n);
+		size_t sl = strlen(sd);
+		bool dot  = sl && (sd[sl - 1] == '.' || sd[sl - 1] == ':');
+		snprintf(d, n, "%s%s %s", sd, dot ? "" : ".", ld);
+		return d;
+	}
+	return xstrdup(sd ? sd : ld);
 }
 
 /* "0:Disabled,1:Enabled" style lists (old ArduPilot "Values"/"Bitmask" fields). */
@@ -454,14 +485,10 @@ bool meta_load_px4_json(meta_db_t *db, const char *path, char *err, size_t errle
 		m->name			= xstrdup(name);
 		const char *sd = jstr(it, "shortDesc"), *ld = jstr(it, "longDesc");
 		m->human = xstrdup(sd);
-		if (sd && ld && *ld) {
-			size_t n  = strlen(sd) + strlen(ld) + 4;
-			m->desc	  = xmalloc(n);
-			size_t sl = strlen(sd);
-			bool dot  = sl && (sd[sl - 1] == '.' || sd[sl - 1] == ':');
-			snprintf(m->desc, n, "%s%s %s", sd, dot ? "" : ".", ld);
-		} else {
-			m->desc = xstrdup(sd ? sd : ld);
+		m->desc	 = compose_desc(sd, ld);
+		if (ld && *ld) {
+			m->src_long = xstrdup(ld);
+			str_squash_ws(m->src_long);
 		}
 		m->units = xstrdup(jstr(it, "units"));
 		m->user	 = xstrdup(jstr(it, "category"));
@@ -526,4 +553,233 @@ bool meta_load_file(meta_db_t *db, const char *path, char *err, size_t errlen) {
 		return meta_load_apm_xml(db, path, err, errlen);
 	snprintf(err, errlen, "%s: unknown metadata format", path);
 	return false;
+}
+
+/* ------------------------------------------------------------------------ */
+/* translations                                                               */
+
+static bool g_translate = true;
+
+void meta_set_translate(bool on) { g_translate = on; }
+bool meta_translate_enabled(void) { return g_translate; }
+
+const char *meta_human(const param_meta_t *m) {
+	if (!m)
+		return NULL;
+	return g_translate && m->human_tr ? m->human_tr : m->human;
+}
+
+const char *meta_desc(const param_meta_t *m) {
+	if (!m)
+		return "";
+	if (g_translate && m->desc_tr)
+		return m->desc_tr;
+	if (m->desc && *m->desc)
+		return m->desc;
+	return m->human ? m->human : "";
+}
+
+bool meta_desc_translated(const param_meta_t *m) { return m && g_translate && m->desc_tr; }
+
+const char *meta_options(const param_meta_t *m) {
+	if (!m)
+		return NULL;
+	return g_translate && m->options_tr ? m->options_tr : m->options;
+}
+
+const char *meta_vlabel(const meta_value_t *v) { return g_translate && v->label_tr ? v->label_tr : v->label; }
+const char *meta_blabel(const meta_bit_t *b) { return g_translate && b->label_tr ? b->label_tr : b->label; }
+const char *meta_user_tr(const param_meta_t *m) { return m && g_translate ? m->user_tr : NULL; }
+
+/* Qt Linguist .ts: <context><name>PATH</name><message><source>EN</source>
+ * <translation [type="unfinished"]>TR</translation></message></context>
+ * PATH: /parameters/NAME/{shortDesc,longDesc}
+ *       /parameters/NAME/values/CODE/description
+ *       /parameters/NAME/bitmask/BIT/description
+ *       $globals/category/NAME */
+typedef struct ts_parser {
+	meta_db_t *db;
+	enum { TS_NONE, TS_NAME, TS_SOURCE, TS_TR } in;
+	bool unfinished;
+	char *name, *source, *tr;
+	size_t nlen, slen, tlen;
+	char **cur;
+	size_t *curlen;
+} ts_parser_t;
+
+static void ts_append(char **buf, size_t *len, const char *s, int n) {
+	*buf = xrealloc(*buf, *len + (size_t)n + 1);
+	memcpy(*buf + *len, s, (size_t)n);
+	*len += (size_t)n;
+	(*buf)[*len] = '\0';
+}
+
+static void XMLCALL ts_start(void *ud, const XML_Char *el, const XML_Char **atts) {
+	ts_parser_t *p = ud;
+	if (strcmp(el, "context") == 0) {
+		p->nlen = p->slen = p->tlen = 0;
+		free(p->name), free(p->source), free(p->tr);
+		p->name = p->source = p->tr = NULL;
+		p->unfinished				= false;
+	} else if (strcmp(el, "name") == 0) {
+		p->in = TS_NAME;
+	} else if (strcmp(el, "source") == 0) {
+		p->in = TS_SOURCE;
+	} else if (strcmp(el, "translation") == 0) {
+		p->in		  = TS_TR;
+		const char *t = attr(atts, "type");
+		/* "unfinished" = not translated (or not approved); obsolete/vanished = old */
+		p->unfinished = t && *t;
+	}
+}
+
+static void XMLCALL ts_chars(void *ud, const XML_Char *s, int len) {
+	ts_parser_t *p = ud;
+	switch (p->in) {
+	case TS_NAME:
+		ts_append(&p->name, &p->nlen, s, len);
+		break;
+	case TS_SOURCE:
+		ts_append(&p->source, &p->slen, s, len);
+		break;
+	case TS_TR:
+		ts_append(&p->tr, &p->tlen, s, len);
+		break;
+	default:
+		break;
+	}
+}
+
+static bool same_text(const char *a, const char *b) {
+	if (!a || !b)
+		return false;
+	char *x = xstrdup(a), *y = xstrdup(b);
+	str_squash_ws(x);
+	str_squash_ws(y);
+	bool eq = strcmp(x, y) == 0;
+	free(x);
+	free(y);
+	return eq;
+}
+
+static void set_tr(meta_db_t *db, char **dst, const char *en, const char *src, const char *tr) {
+	if (!same_text(en, src)) {
+		db->tr_stale++;
+		return;
+	}
+	free(*dst);
+	*dst = xstrdup(tr);
+	str_squash_ws(*dst);
+	db->tr_strings++;
+}
+
+static void ts_apply(ts_parser_t *p) {
+	if (!p->name || !p->source || !p->tr || p->unfinished)
+		return;
+	char *t = str_trim(p->tr);
+	if (!*t)
+		return;
+	meta_db_t *db = p->db;
+	char path[512];
+	xstrlcpy(path, str_trim(p->name), sizeof path);
+
+	if (strncmp(path, "$globals/category/", 18) == 0) {
+		const char *cat = path + 18;
+		for (int i = 0; i < db->n; i++)
+			if (db->v[i]->user && strcmp(db->v[i]->user, cat) == 0) {
+				free(db->v[i]->user_tr);
+				db->v[i]->user_tr = xstrdup(t);
+			}
+		return;
+	}
+	if (strncmp(path, "/parameters/", 12) != 0)
+		return;
+	char *name = path + 12, *rest = strchr(name, '/');
+	if (!rest)
+		return;
+	*rest++			= '\0';
+	param_meta_t *m = (param_meta_t *)meta_find(db, name);
+	if (!m)
+		return;
+	if (strcmp(rest, "shortDesc") == 0) {
+		set_tr(db, &m->human_tr, m->human, p->source, t);
+	} else if (strcmp(rest, "longDesc") == 0) {
+		set_tr(db, &m->long_tr, m->src_long, p->source, t);
+	} else {
+		bool values = strncmp(rest, "values/", 7) == 0, bits = strncmp(rest, "bitmask/", 8) == 0;
+		if (!values && !bits)
+			return;
+		char *key = rest + (values ? 7 : 8), *slash = strchr(key, '/');
+		if (!slash || strcmp(slash, "/description") != 0)
+			return;
+		*slash		= '\0';
+		double code = strtod(key, NULL);
+		if (values) {
+			for (int i = 0; i < m->nvalues; i++)
+				if (fabs(m->values[i].code - code) < 1e-6)
+					set_tr(db, &m->values[i].label_tr, m->values[i].label, p->source, t);
+		} else {
+			for (int i = 0; i < m->nbits; i++)
+				if (m->bits[i].bit == (int)code)
+					set_tr(db, &m->bits[i].label_tr, m->bits[i].label, p->source, t);
+		}
+	}
+}
+
+static void XMLCALL ts_end(void *ud, const XML_Char *el) {
+	ts_parser_t *p = ud;
+	p->in		   = TS_NONE;
+	if (strcmp(el, "context") == 0)
+		ts_apply(p);
+}
+
+bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, char *err, size_t errlen) {
+	FILE *f = fopen(path, "rb");
+	if (!f) {
+		snprintf(err, errlen, "%s: %s", path, strerror(errno));
+		return false;
+	}
+	XML_Parser xp = XML_ParserCreate(NULL);
+	ts_parser_t p = {.db = db};
+	XML_SetUserData(xp, &p);
+	XML_SetElementHandler(xp, ts_start, ts_end);
+	XML_SetCharacterDataHandler(xp, ts_chars);
+	bool ok = true;
+	char buf[65536];
+	for (;;) {
+		size_t n  = fread(buf, 1, sizeof buf, f);
+		bool last = n < sizeof buf;
+		if (XML_Parse(xp, buf, (int)n, last) == XML_STATUS_ERROR) {
+			snprintf(err, errlen, "%s: %s", path, XML_ErrorString(XML_GetErrorCode(xp)));
+			ok = false;
+			break;
+		}
+		if (last)
+			break;
+	}
+	XML_ParserFree(xp);
+	free(p.name), free(p.source), free(p.tr);
+	fclose(f);
+	if (!ok)
+		return false;
+
+	/* derive the composite strings */
+	for (int i = 0; i < db->n; i++) {
+		param_meta_t *m = db->v[i];
+		if (m->human_tr || m->long_tr) {
+			free(m->desc_tr);
+			m->desc_tr = compose_desc(m->human_tr ? m->human_tr : m->human, m->long_tr ? m->long_tr : m->src_long);
+		}
+		bool labels = false;
+		for (int k = 0; k < m->nvalues; k++)
+			labels |= m->values[k].label_tr != NULL;
+		for (int k = 0; k < m->nbits; k++)
+			labels |= m->bits[k].label_tr != NULL;
+		if (labels) {
+			free(m->options_tr);
+			m->options_tr = build_options(m, true);
+		}
+	}
+	xstrlcpy(db->tr_lang, lang, sizeof db->tr_lang);
+	return true;
 }

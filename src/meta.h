@@ -1,5 +1,10 @@
 /* Parameter metadata (units, ranges, enum values, descriptions).
- * Sources: ArduPilot apm.pdef.xml, PX4 parameters JSON (QGC format). */
+ * Sources: ArduPilot apm.pdef.xml, PX4 parameters JSON (QGC format).
+ *
+ * Translations: the English fields are always kept; *_tr fields hold a
+ * translation when one exists *for exactly that English text* (a stale
+ * translation of an older description is never shown). Display code uses
+ * the meta_*() accessors, which honour the global on/off switch. */
 #pragma once
 
 #include <stdbool.h>
@@ -8,11 +13,13 @@
 typedef struct meta_value {
 	double code;
 	char *label;
+	char *label_tr;
 } meta_value_t;
 
 typedef struct meta_bit {
 	int bit;
 	char *label;
+	char *label_tr;
 } meta_bit_t;
 
 typedef struct param_meta {
@@ -35,6 +42,9 @@ typedef struct param_meta {
 	meta_bit_t *bits;
 	int nbits;
 	char *options; /* Mission-Planner-style "Options" column text */
+
+	char *src_long; /* PX4 longDesc as published (to match translations) */
+	char *human_tr, *long_tr, *desc_tr, *options_tr, *user_tr;
 } param_meta_t;
 
 typedef struct meta_db {
@@ -43,6 +53,10 @@ typedef struct meta_db {
 	int *htab;
 	int hcap;
 	char source[256]; /* description for the UI */
+
+	char tr_lang[16]; /* language of applied translations, "" if none */
+	int tr_strings;	  /* translated strings applied */
+	int tr_stale;	  /* translations skipped: English text changed */
 } meta_db_t;
 
 meta_db_t *meta_db_new(void);
@@ -56,3 +70,18 @@ bool meta_load_px4_json(meta_db_t *db, const char *path, char *err, size_t errle
 
 /* Label for an enum value, or NULL. */
 const char *meta_value_label(const param_meta_t *m, double v);
+
+/* PX4 metadata translations (Qt Linguist .ts from PX4-Metadata-Translations). */
+bool meta_load_qt_ts(meta_db_t *db, const char *path, const char *lang, char *err, size_t errlen);
+
+/* Display accessors: translated text when available and enabled. */
+void meta_set_translate(bool on);
+bool meta_translate_enabled(void);
+const char *meta_human(const param_meta_t *m);
+const char *meta_desc(const param_meta_t *m); /* falls back to the short name */
+const char *meta_options(const param_meta_t *m);
+const char *meta_vlabel(const meta_value_t *v);
+const char *meta_blabel(const meta_bit_t *b);
+const char *meta_user_tr(const param_meta_t *m); /* NULL: use gettext */
+/* A translated description is being shown (so the original is worth showing too). */
+bool meta_desc_translated(const param_meta_t *m);

@@ -37,6 +37,8 @@ static void usage(FILE *f) {
 			"      --tcp-port N      auto-detect TCP port (default 5760)\n"
 			"  -m, --meta FILE       parameter metadata (apm.pdef.xml or PX4 .json)\n"
 			"      --offline         never download metadata, use cache only\n"
+			"      --meta-lang LANG  PX4 metadata translation, e.g. uk_UA; en = none\n"
+			"                        (default: from LANGUAGE / LC_MESSAGES)\n"
 			"  -d, --dump            no UI: download parameters, print TSV to stdout, exit\n"
 			"  -t, --timeout SEC     with --dump: give up after SEC seconds (default 90)\n"
 			"  -l, --list            list serial ports and how they are classified\n"
@@ -91,8 +93,9 @@ int main(int argc, char **argv) {
 	o->gcs_sysid				= 255;
 	o->gcs_compid				= MAV_COMP_ID_MISSIONPLANNER;
 	o->dump_timeout				= 90;
+	snprintf(o->meta_lang, sizeof o->meta_lang, "auto");
 
-	enum { O_GCS = 1000, O_NOSER, O_NOUDP, O_NOTCP, O_UDPP, O_TCPP, O_OFFLINE, O_LOG };
+	enum { O_GCS = 1000, O_NOSER, O_NOUDP, O_NOTCP, O_UDPP, O_TCPP, O_OFFLINE, O_LOG, O_MLANG };
 	static const struct option lo[] = {
 			{"baud",	  required_argument, 0, 'b'		 },
 			{"sysid",	  required_argument, 0, 's'		 },
@@ -104,6 +107,7 @@ int main(int argc, char **argv) {
 			{"tcp-port",  required_argument, 0, O_TCPP	 },
 			{"meta",	  required_argument, 0, 'm'		 },
 			{"offline",	  no_argument,		 0, O_OFFLINE},
+			{"meta-lang", required_argument, 0, O_MLANG	 },
 			{"dump",	  no_argument,		 0, 'd'		 },
 			{"timeout",	  required_argument, 0, 't'		 },
 			{"list",	  no_argument,		 0, 'l'		 },
@@ -145,6 +149,10 @@ int main(int argc, char **argv) {
 			break;
 		case O_OFFLINE:
 			o->offline = true;
+			break;
+		case O_MLANG:
+			/* "en" / "none" disable metadata translations */
+			snprintf(o->meta_lang, sizeof o->meta_lang, "%s", strcmp(optarg, "en") == 0 || strcmp(optarg, "none") == 0 ? "" : optarg);
 			break;
 		case 'd':
 			o->dump = true;

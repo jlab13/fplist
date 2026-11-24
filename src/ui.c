@@ -161,7 +161,10 @@ static void draw_title(app_t *a) {
 			snprintf(pend_s, sizeof pend_s, ngettext("  │  %d modified", "  │  %d modified", pend), pend);
 		snprintf(left, sizeof left, " gndtui  │  %s %s %s  │  sys %u  │  %s  │  %s%s", vehicle_fw_name(v),
 				_(vehicle_type_name(v->mav_type)), ver, v->sysid, v->link.name, prog, pend_s);
-		snprintf(right, sizeof right, "%s", a->meta_status);
+		if (a->meta && a->meta->tr_lang[0])
+			snprintf(right, sizeof right, "%s · %s", a->meta_status, meta_translate_enabled() ? a->meta->tr_lang : "EN");
+		else
+			snprintf(right, sizeof right, "%s", a->meta_status);
 	}
 	/* Right side: link indicator always, metadata source when it fits. */
 	const char *ind = NULL;
@@ -326,7 +329,7 @@ static void draw_status(app_t *a, int *cursor_y, int *cursor_x) {
 			/* TRANSLATORS: key names (Enter, /, w, r, ...) must stay as they are */
 			ui_put(n, y, 0, avail,
 					_(" ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  "
-					  "s save  l load  v wrap  d details  ? help  q quit"));
+					  "s save  l load  v wrap  d details  t lang  ? help  q quit"));
 		}
 		break;
 	}
@@ -414,27 +417,28 @@ static void draw_help(app_t *a) {
 		const char *text;
 		bool tkey; /* key label is a word that needs translating */
 	} lines[] = {
-			{NULL,			  N_("Navigation"),									 false},
-			{"↑ ↓  j k",	  N_("move"),										 false},
-			{"PgUp PgDn",	  N_("page"),										 false},
-			{"Home End  g G", N_("first / last"),								 false},
-			{N_("mouse"),	  N_("click, wheel, double click to edit"),			 true },
-			{NULL,			  N_("Editing"),									 false},
-			{"Enter  e",	  N_("edit value (list / bitmask editor if known)"), false},
-			{"z  Z",		  N_("undo edit of this / all parameters"),			 false},
-			{"w",			  N_("write modified parameters to the vehicle"),	 false},
-			{"r",			  N_("refresh (re-download) all parameters"),		 false},
-			{NULL,			  N_("View"),										 false},
-			{"/",			  N_("search name & description, Esc clears"),		 false},
-			{"m",			  N_("show only modified parameters"),				 false},
-			{"f  Space",	  N_("toggle favourite (favourites sort first)"),	 false},
-			{"v",			  N_("wrap rows (Mission Planner style)"),			 false},
-			{"d",			  N_("toggle the details pane"),					 false},
-			{NULL,			  N_("Files"),										 false},
-			{"s",			  N_("save parameters (Mission Planner .param)"),	 false},
-			{"l",			  N_("load parameters from file (become edits)"),	 false},
-			{"",			  "",												 false},
-			{"q  Ctrl-C",	  N_("quit"),										 false},
+			{NULL,			  N_("Navigation"),									  false},
+			{"↑ ↓  j k",	  N_("move"),										  false},
+			{"PgUp PgDn",	  N_("page"),										  false},
+			{"Home End  g G", N_("first / last"),								  false},
+			{N_("mouse"),	  N_("click, wheel, double click to edit"),			  true },
+			{NULL,			  N_("Editing"),									  false},
+			{"Enter  e",	  N_("edit value (list / bitmask editor if known)"),  false},
+			{"z  Z",		  N_("undo edit of this / all parameters"),			  false},
+			{"w",			  N_("write modified parameters to the vehicle"),	  false},
+			{"r",			  N_("refresh (re-download) all parameters"),		  false},
+			{NULL,			  N_("View"),										  false},
+			{"/",			  N_("search name & description, Esc clears"),		  false},
+			{"m",			  N_("show only modified parameters"),				  false},
+			{"f  Space",	  N_("toggle favourite (favourites sort first)"),	  false},
+			{"v",			  N_("wrap rows (Mission Planner style)"),			  false},
+			{"d",			  N_("toggle the details pane"),					  false},
+			{"t",			  N_("descriptions: translation / original English"), false},
+			{NULL,			  N_("Files"),										  false},
+			{"s",			  N_("save parameters (Mission Planner .param)"),	  false},
+			{"l",			  N_("load parameters from file (become edits)"),	  false},
+			{"",			  "",												  false},
+			{"q  Ctrl-C",	  N_("quit"),										  false},
 	};
 	enum { KEYW = 16 };
 	ui_t *u = &a->ui;
@@ -728,6 +732,17 @@ static void normal_key(app_t *a, uint32_t k) {
 	case 'd':
 		u->details = !u->details;
 		ui_ensure_visible(a);
+		break;
+	case 't':
+		if (!a->meta || !a->meta->tr_lang[0]) {
+			app_msg(a, MSG_INFO, "%s", _("No translation of the parameter descriptions is available"));
+			break;
+		}
+		meta_set_translate(!meta_translate_enabled());
+		u->view_stale = true; /* row heights in wrap mode */
+		app_msg(a, MSG_INFO,
+				meta_translate_enabled() ? _("Parameter descriptions: translation (%s)") : _("Parameter descriptions: original English%s"),
+				meta_translate_enabled() ? a->meta->tr_lang : "");
 		break;
 	case 's':
 		begin_prompt(a, PROMPT_SAVE);

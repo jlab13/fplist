@@ -2,7 +2,9 @@
  * in $XDG_CACHE_HOME/gndtui.
  *   ArduPilot: https://autotest.ardupilot.org/Parameters/versioned/<V>/stable-X.Y.Z/apm.pdef.xml
  *              falling back to .../Parameters/<Vehicle>/apm.pdef.xml (master)
- *   PX4:       PX4ParameterFactMetaData.json from the QGroundControl repo */
+ *   PX4:       PX4ParameterFactMetaData.json from the QGroundControl repo,
+ *              translated strings from PX4/PX4-Metadata-Translations
+ *              (translated/parameters_<ll_CC>.ts) */
 #pragma once
 
 #include <pthread.h>
@@ -18,6 +20,7 @@ typedef struct metafetch_req {
 	char version[32];		/* "4.5.7" for official releases, else "" */
 	char override_path[1024];
 	bool offline;
+	char lang[16]; /* PX4 metadata translation, e.g. "uk_UA"; "" = none */
 } metafetch_req_t;
 
 typedef struct metafetch {
