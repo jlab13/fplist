@@ -547,6 +547,30 @@ static void request_quit(app_t *a) {
 	}
 }
 
+/* The character a key press produced. With the kitty keyboard protocol
+ * (which notcurses enables when the terminal supports it) a shifted key
+ * arrives as the *base* key plus SHIFT, e.g. Shift+'-' as '-'; the produced
+ * text ('_', or 'Й' on a Ukrainian layout) is in eff_text. Legacy terminals
+ * send the shifted character itself, where eff_text simply equals id. */
+static uint32_t key_text(const ncinput *ni) {
+	uint32_t k = ni->id;
+	if (nckey_synthesized_p(k) || ncinput_ctrl_p(ni) || ncinput_alt_p(ni))
+		return k;
+	uint32_t t = ni->eff_text[0];
+	if (t != k && t >= 0x20 && t != 0x7f && !nckey_synthesized_p(t))
+		return t;
+	/* no text reported (notcurses then copies id into eff_text): assume a
+	 * US layout for shifted ASCII punctuation */
+	if (ncinput_shift_p(ni) && k < 0x80) {
+		static const char base[]	= "`1234567890-=[]\\;',./";
+		static const char shifted[] = "~!@#$%^&*()_+{}|:\"<>?";
+		const char *p				= strchr(base, (int)k);
+		if (p && k)
+			return (uint32_t)(unsigned char)shifted[p - base];
+	}
+	return k;
+}
+
 static bool is_quit_key(const ncinput *ni) { return ni->id == 0x03 || (ncinput_ctrl_p(ni) && (ni->id == 'c' || ni->id == 'C')); }
 
 static void handle_mouse(app_t *a, const ncinput *ni) {
@@ -590,9 +614,8 @@ static void handle_mouse(app_t *a, const ncinput *ni) {
 	}
 }
 
-static void normal_key(app_t *a, const ncinput *ni) {
-	ui_t *u	   = &a->ui;
-	uint32_t k = ni->id;
+static void normal_key(app_t *a, uint32_t k) {
+	ui_t *u = &a->ui;
 	if (a->phase == PHASE_DETECT) {
 		if (k == 'q' || k == 'Q' || k == NCKEY_ESC)
 			a->quit = true;
@@ -775,6 +798,7 @@ void ui_handle_input(app_t *a) {
 			handle_mouse(a, &ni);
 			continue;
 		}
+		k = key_text(&ni);
 		/* notcurses reports Ctrl+U as 'U' + modifier: map to the C0 code */
 		if (ncinput_ctrl_p(&ni) && k < 0x80 && ((k >= 'a' && k <= 'z') || (k >= 'A' && k <= 'Z')) && k != 'c' && k != 'C')
 			k = k & 0x1f;
@@ -787,7 +811,7 @@ void ui_handle_input(app_t *a) {
 		}
 		switch (u->mode) {
 		case MODE_NORMAL:
-			normal_key(a, &ni);
+			normal_key(a, k);
 			break;
 		case MODE_SEARCH:
 			search_key(a, k);
