@@ -1,0 +1,15 @@
+# The build environment of the RPM package: AlmaLinux 10, the oldest glibc (2.39) of the
+# systems it is for (Fedora, openSUSE Leap 16 / Tumbleweed, RHEL 10 and its rebuilds). The
+# dependencies of an RPM are sonames (libcurl.so.4, ...), not package names, so one package
+# fits all of them. Built per architecture by build.sh rpm (--platform linux/<arch>).
+FROM docker.io/library/almalinux:10
+
+# CRB has the -devel packages that AppStream lacks; rpm-build brings rpmbuild and debugedit
+# for the -debuginfo package. No notcurses: the build makes its own (ncursesw, libunistring,
+# zlib)
+RUN dnf install -y dnf-plugins-core \
+ && dnf config-manager --set-enabled crb \
+ && dnf install -y gcc make cmake pkgconf-pkg-config git ca-certificates file gettext \
+      rpm-build binutils \
+      libcurl-devel expat-devel ncurses-devel libunistring-devel zlib-devel \
+ && dnf clean all

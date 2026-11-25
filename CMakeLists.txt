@@ -112,22 +112,44 @@ endif()
 install(TARGETS fpl RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES LICENSE README.md README_UA.md DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
-# --- Debian package fpl (+ fpl-dbgsym), see cmake/DebPackage.cmake ----------
-# Built by tools/deb/build.sh in a Debian 13 container. Debian 13 has no notcurses, so the
-# bundled one is linked statically; the shared libraries come from dpkg-shlibdeps.
-# The paths of the data and the translations are compiled in: the package goes to the prefix
-# the build was configured for (tools/deb/inside.sh configures /usr)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/DebPackage.cmake)
-set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
-set(CPACK_DEBIAN_PACKAGE_SECTION electronics)
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Full Parameter List: ArduPilot and PX4 parameter editor")
-# the extended description only: CPack puts the summary above it and indents every line
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Terminal (TUI) editor of autopilot parameters over MAVLink, with the columns of
+# --- packages: deb and rpm, see cmake/DebPackage.cmake and cmake/RpmPackage.cmake
+# Built by tools/pkg/build.sh in a container: Debian 13 for the deb, AlmaLinux 10 for the rpm.
+# notcurses is linked statically (Debian 13 has none); the shared libraries become dependencies
+# through dpkg-shlibdeps and the soname dependencies of rpmbuild.
+# The paths of the data and the translations are compiled in: the packages go to the prefix
+# the build was configured for (tools/pkg/inside.sh configures /usr)
+set(FPL_DESCRIPTION "Terminal (TUI) editor of autopilot parameters over MAVLink, with the columns of
 Mission Planner's Full Parameter List. Finds the vehicle on USB, UDP or TCP like
 QGroundControl, downloads the parameters (MAVFTP for ArduPilot), shows their metadata
 and translations and writes the changes back.")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/jlab13/fplist")
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/DebPackage.cmake)
+set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Full Parameter List: ArduPilot and PX4 parameter editor")
 # the metadata is downloaded over HTTPS
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "ca-certificates")
+set(_fpl_recommends ca-certificates)
+
+# deb: fpl (+ fpl-dbgsym)
+set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
+set(CPACK_DEBIAN_PACKAGE_SECTION electronics)
+# the extended description only: CPack puts the summary above it and indents every line
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${FPL_DESCRIPTION}")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/jlab13/fplist")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS ${_fpl_recommends})
+
+# rpm: fpl (+ fpl-debuginfo)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/RpmPackage.cmake)
+set(CPACK_RPM_PACKAGE_LICENSE MIT)
+set(CPACK_RPM_PACKAGE_URL "https://github.com/jlab13/fplist")
+set(CPACK_RPM_PACKAGE_DESCRIPTION "${FPL_DESCRIPTION}")
+# no Recommends: CPack 3.31 leaves it out with rpm 4.19, and ca-certificates comes anyway with
+# the TLS library of libcurl on every RPM distribution (tools/pkg/install-test.sh checks it)
+# the locale directories belong to the system (filesystem package); the package owns only
+# its fpl.mo files in them
+file(STRINGS ${CMAKE_SOURCE_DIR}/po/LINGUAS _fpl_langs REGEX "^[^#]")
+string(REPLACE " " ";" _fpl_langs "${_fpl_langs}")
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION ${CMAKE_INSTALL_FULL_LOCALEDIR})
+foreach(_l IN LISTS _fpl_langs)
+  list(APPEND CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+    ${CMAKE_INSTALL_FULL_LOCALEDIR}/${_l} ${CMAKE_INSTALL_FULL_LOCALEDIR}/${_l}/LC_MESSAGES)
+endforeach()
 include(CPack)

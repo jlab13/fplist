@@ -1,5 +1,5 @@
 # Common settings of the Debian packages built by CPack: "cpack -G DEB" in the build
-# directory, or tools/deb/build.sh, which builds them in a Debian 13 container for amd64 and
+# directory, or tools/pkg/build.sh deb, which builds them in a Debian 13 container for amd64 and
 # arm64.
 #
 # Include it after the install rules; it sets what every package shares and DEB_VERSION.
@@ -64,7 +64,7 @@ find_program(DPKG_SHLIBDEPS_EXECUTABLE dpkg-shlibdeps)
 if(DPKG_SHLIBDEPS_EXECUTABLE)
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 else()
-  message(STATUS "No dpkg-shlibdeps: packages built here miss their library dependencies, use tools/deb/build.sh")
+  message(STATUS "No dpkg-shlibdeps: packages built here miss their library dependencies, use tools/pkg/build.sh deb")
 endif()
 
 # a library package declares its SONAME in a shlibs file, and a package linked against it then
@@ -83,7 +83,7 @@ set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${_deb_arch})
 set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
 # <name>_<version>_<arch>.deb, the Debian convention
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-# the symbols go to a <name>-dbgsym package (.ddeb): the build has -g (tools/deb/build.sh),
+# the symbols go to a <name>-dbgsym package (.ddeb): the build has -g (tools/pkg/build.sh),
 # and CPack moves the debug sections of the packaged copy there, stripping it. No
 # CPACK_STRIP_FILES: a copy stripped before that leaves nothing for the dbgsym package
 set(CPACK_DEBIAN_DEBUGINFO_PACKAGE ON)
