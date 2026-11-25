@@ -158,6 +158,23 @@ If `/dev/ttyACM*` can't be opened, the search screen tells you which group to jo
   4 attempts with a 1.2 s timeout. If the vehicle returns another value, it is shown as an error.
 - `STATUSTEXT` messages from the flight controller appear in the status line.
 
+## Rebooting the flight controller
+
+`R` reboots the flight controller (`MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN`), for example after writing a parameter that
+only takes effect after a reboot: the write message then ends with "(R)".
+
+- It asks first and needs `y`: `Enter` does not confirm it.
+- Refused while the vehicle is armed (the autopilot refuses it too) and while a write is in progress.
+- The command is sent once and never repeated by itself: a repeat that arrives after a reboot whose answer got lost
+  would restart the vehicle a second time.
+- fpl then waits for the vehicle to go away (the USB port disappears, or the heartbeat stops) and come back,
+  without the usual "link lost" errors. The title shows `REBOOTING`.
+- It downloads the parameters again once the vehicle has finished starting up: ArduPilot registers parameters
+  while it starts (a SpeedyBee F4 had 928 of its 1082 two seconds after the first heartbeat) and reports
+  `MAV_STATE_BOOT` in the heartbeat until then. Parameters of hardware found later, such as `GPS1_*` once a GPS is
+  detected, can appear after that; `r` loads them.
+- Edits not written yet stay in the table.
+
 ## Default values
 
 The default comes from the firmware (ArduPilot, over MAVFTP), or else from the metadata (PX4, the `default`
@@ -219,6 +236,7 @@ The cache lives in `$XDG_CACHE_HOME/fpl` (`~/.cache/fpl`). `--offline` downloads
 | `Enter` / `e` / double click | edit the value: a list for enums, checkboxes for bitmasks, text otherwise (`↑↓` step by `Increment`) |
 | `w` | write the edited parameters to the vehicle (like "Write Params" in MP) |
 | `r` | re-download all parameters |
+| `R` | reboot the flight controller, then re-download the parameters (asks first, `y` to confirm) |
 | `z` / `Z` | undo the edit of this / all parameters |
 | `/` | search names and descriptions (name matches first), `Esc` clears |
 | `m` | only parameters edited in this session (not written yet, or failed to write) |
@@ -263,13 +281,15 @@ LANG=C ./build/fpl             # English
 ## Testing without hardware
 
 `build/fakevehicle` is a minimal vehicle: HEARTBEAT, AUTOPILOT_VERSION, the parameter protocol and MAVFTP
-(`@PARAM/param.pck` with defaults, like ArduPilot).
+(`@PARAM/param.pck` with defaults, like ArduPilot). A reboot makes it silent for `--boot-time` seconds (over TCP the
+connection goes away, like a USB port), then report `MAV_STATE_BOOT` for a while; `STAT_BOOTCNT` counts the boots.
 
 ```sh
 build/fakevehicle --loss 20 --count 1500     # ArduPilot over UDP → 127.0.0.1:14550, 20% loss
 build/fakevehicle --px4 --tcp 5760           # PX4 (byte-wise) as a TCP server
 build/fakevehicle --pty                      # prints /dev/pts/N — emulates a serial port
 build/fakevehicle --no-ftp                   # no MAVFTP: exercises the PARAM_REQUEST_LIST fallback
+build/fakevehicle --armed                    # armed: a reboot is refused
 ```
 
 `tools/ci/smoke.sh [BUILD_DIR]` downloads the parameters with `fpl --dump` from it over MAVFTP, over

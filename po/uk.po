@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fpl 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 01:08+0200\n"
+"POT-Creation-Date: 2026-11-25 20:32+0200\n"
 "PO-Revision-Date: 2026-11-24 23:02+0200\n"
 "Last-Translator: JLab13\n"
 "Language-Team: Ukrainian\n"
@@ -23,15 +23,19 @@ msgstr ""
 msgid "%s is being written, try again in a moment"
 msgstr "%s зараз записується, спробуйте за мить"
 
-#: src/app.c:87
+#: src/app.c:87 src/app.c:119
 msgid "Not connected"
 msgstr "Немає з'єднання"
 
-#: src/app.c:92
+#: src/app.c:91 src/app.c:109
+msgid "Wait for the flight controller to restart"
+msgstr "Дочекайтеся перезапуску польотного контролера"
+
+#: src/app.c:96
 msgid "Nothing to write - edit a value first (Enter)"
 msgstr "Нічого записувати - спершу змініть значення (Enter)"
 
-#: src/app.c:94
+#: src/app.c:98
 #, c-format
 msgid "Writing %d parameter..."
 msgid_plural "Writing %d parameters..."
@@ -39,15 +43,27 @@ msgstr[0] "Запис %d параметра..."
 msgstr[1] "Запис %d параметрів..."
 msgstr[2] "Запис %d параметрів..."
 
-#: src/app.c:101
+#: src/app.c:105 src/app.c:132
 msgid "Wait for the write to finish"
 msgstr "Дочекайтеся завершення запису"
 
-#: src/app.c:105
+#: src/app.c:113
 msgid "Refreshing parameters..."
 msgstr "Оновлення параметрів..."
 
+#: src/app.c:123
+msgid "The flight controller is already rebooting"
+msgstr "Польотний контролер уже перезавантажується"
+
+#: src/app.c:128
+msgid "The vehicle is armed: disarm it before rebooting"
+msgstr "Апарат взведено: охолостіть його перед перезавантаженням"
+
 #: src/app.c:142
+msgid "Rebooting the flight controller..."
+msgstr "Перезавантажуємо польотний контролер..."
+
+#: src/app.c:179
 #, c-format
 msgid "Saved %d parameter to %s"
 msgid_plural "Saved %d parameters to %s"
@@ -55,60 +71,60 @@ msgstr[0] "Збережено %d параметр у %s"
 msgstr[1] "Збережено %d параметри у %s"
 msgstr[2] "Збережено %d параметрів у %s"
 
-#: src/app.c:144
+#: src/app.c:181
 #, c-format
 msgid "Save failed: %s"
 msgstr "Не вдалося зберегти: %s"
 
-#: src/app.c:153
+#: src/app.c:190
 #, c-format
 msgid "Load failed: %s"
 msgstr "Не вдалося завантажити: %s"
 
-#: src/app.c:169
+#: src/app.c:206
 #, c-format
 msgid "Loaded %s: %d changed, %d same, %d not on vehicle%s"
 msgstr "Завантажено %s: змінено %d, без змін %d, відсутні на апараті %d%s"
 
-#: src/app.c:170
+#: src/app.c:207
 msgid " - press w to write"
 msgstr " - натисніть w для запису"
 
-#: src/app.c:186
+#: src/app.c:223
 #, c-format
 msgid "Connected to %s %s (sysid %u) via %s"
 msgstr "Підключено до %s %s (sysid %u) через %s"
 
-#: src/app.c:212
+#: src/app.c:249
 msgid "loading metadata..."
 msgstr "завантаження метаданих..."
 
-#: src/app.c:232
+#: src/app.c:269
 msgid "no metadata"
 msgstr "без метаданих"
 
-#: src/app.c:300
+#: src/app.c:337
 msgid "fpl: cannot initialise the terminal\n"
 msgstr "fpl: не вдалося ініціалізувати термінал\n"
 
-#: src/app.c:304
+#: src/app.c:341
 msgid "Searching for vehicle...\n"
 msgstr "Пошук апарата...\n"
 
-#: src/app.c:365
+#: src/app.c:402
 #, c-format
 msgid "fpl: timeout (%s)\n"
 msgstr "fpl: час очікування вичерпано (%s)\n"
 
-#: src/app.c:365
+#: src/app.c:402
 msgid "no vehicle found"
 msgstr "апарат не знайдено"
 
-#: src/app.c:365
+#: src/app.c:402
 msgid "parameter download"
 msgstr "завантаження параметрів"
 
-#: src/detect.c:176 src/ui.c:387
+#: src/detect.c:176 src/ui.c:511
 msgid "waiting"
 msgstr "очікування"
 
@@ -324,35 +340,35 @@ msgstr "невідома помилка"
 msgid "metadata: cannot start thread"
 msgstr "метадані: не вдалося запустити потік"
 
-#: src/ui.c:140
+#: src/ui.c:258
 msgid "searching for vehicle"
 msgstr "пошук апарата"
 
-#: src/ui.c:150
+#: src/ui.c:268
 #, c-format
 msgid "MAVFTP %u%%"
 msgstr "MAVFTP %u%%"
 
-#: src/ui.c:152
+#: src/ui.c:270
 #, c-format
 msgid "MAVFTP %.1f KB"
 msgstr "MAVFTP %.1f КБ"
 
-#: src/ui.c:159
+#: src/ui.c:277
 #, c-format
 msgid "Params %d/%d %s"
 msgstr "Параметри %d/%d %s"
 
-#: src/ui.c:161
+#: src/ui.c:279
 msgid "Requesting params..."
 msgstr "Запит параметрів..."
 
-#: src/ui.c:163
+#: src/ui.c:281
 #, c-format
 msgid "Params %d"
 msgstr "Параметрів: %d"
 
-#: src/ui.c:168
+#: src/ui.c:286
 #, c-format
 msgid "  │  %d modified"
 msgid_plural "  │  %d modified"
@@ -360,58 +376,62 @@ msgstr[0] "  │  змінено: %d"
 msgstr[1] "  │  змінено: %d"
 msgstr[2] "  │  змінено: %d"
 
-#: src/ui.c:181
+#: src/ui.c:300
 msgid " ○ NO LINK "
 msgstr " ○ НЕМАЄ ЗВ'ЯЗКУ "
 
-#: src/ui.c:181
+#: src/ui.c:300
 msgid " ● LINK "
 msgstr " ● ЗВ'ЯЗОК "
 
-#: src/ui.c:261
+#: src/ui.c:303
+msgid " ○ REBOOTING "
+msgstr " ○ ПЕРЕЗАВАНТАЖЕННЯ "
+
+#: src/ui.c:385
 msgid " Search: "
 msgstr " Пошук: "
 
-#: src/ui.c:265
+#: src/ui.c:389
 msgid "  Enter: keep  Esc: clear"
 msgstr "  Enter: залишити  Esc: очистити"
 
-#: src/ui.c:299
+#: src/ui.c:423
 #, c-format
 msgid "range %s..%s%s%s  "
 msgstr "діапазон %s..%s%s%s  "
 
-#: src/ui.c:301
+#: src/ui.c:425
 msgid "Enter: set  Esc: cancel"
 msgstr "Enter: встановити  Esc: скасувати"
 
-#: src/ui.c:302
+#: src/ui.c:426
 msgid "  Tab: list"
 msgstr "  Tab: список"
 
-#: src/ui.c:308
+#: src/ui.c:432
 msgid " Load from: "
 msgstr " Завантажити з: "
 
-#: src/ui.c:308
+#: src/ui.c:432
 msgid " Save to: "
 msgstr " Зберегти в: "
 
-#: src/ui.c:313
+#: src/ui.c:437
 msgid "  Enter: ok  Esc: cancel"
 msgstr "  Enter: ок  Esc: скасувати"
 
 #. TRANSLATORS: the answer keys stay y / n
-#: src/ui.c:327
+#: src/ui.c:451
 #, c-format
 msgid " %s  [y/n]"
 msgstr " %s  [y/n]"
 
-#: src/ui.c:340
+#: src/ui.c:464
 msgid " q: quit"
 msgstr " q: вихід"
 
-#: src/ui.c:344
+#: src/ui.c:468
 msgid ""
 " ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  n "
 "non-default  g groups  s save  l load  v wrap  d details  t lang  ? help  q "
@@ -421,153 +441,157 @@ msgstr ""
 "  n не типові  g групи  s зберегти  l завантажити  v перенос  d деталі  t "
 "мова  ? довідка  q вихід"
 
-#: src/ui.c:368
+#: src/ui.c:492
 msgid "Connecting:"
 msgstr "Підключення:"
 
-#: src/ui.c:368
+#: src/ui.c:492
 msgid "Looking for a vehicle on these connections:"
 msgstr "Пошук апарата на цих з'єднаннях:"
 
-#: src/ui.c:375
+#: src/ui.c:499
 msgid "Connection"
 msgstr "З'єднання"
 
-#: src/ui.c:376
+#: src/ui.c:500
 msgid "Status"
 msgstr "Стан"
 
-#: src/ui.c:394
+#: src/ui.c:518
 #, c-format
 msgid " %llu msgs"
 msgstr " %llu повідомл."
 
-#: src/ui.c:406
+#: src/ui.c:530
 msgid "(no candidate ports yet - plug in a flight controller)"
 msgstr "(портів поки немає - підключіть польотний контролер)"
 
-#: src/ui.c:411
+#: src/ui.c:535
 msgid ""
 "Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"
 msgstr ""
 "Автопошук (як у QGroundControl): USB польотні контролери та SiK-радіомодеми,"
 
-#: src/ui.c:412
+#: src/ui.c:536
 msgid "UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."
 msgstr "прослуховування UDP :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."
 
-#: src/ui.c:413
+#: src/ui.c:537
 msgid ""
 "Force a connection:  fpl /dev/ttyACM0   fpl udp:14550   fpl tcp:host:5760"
 msgstr ""
 "Примусове підключення:  fpl /dev/ttyACM0   fpl udp:14550   fpl tcp:host:5760"
 
-#: src/ui.c:433
+#: src/ui.c:557
 msgid "Navigation"
 msgstr "Навігація"
 
-#: src/ui.c:434
+#: src/ui.c:558
 msgid "move"
 msgstr "рух"
 
-#: src/ui.c:435
+#: src/ui.c:559
 msgid "page"
 msgstr "сторінка"
 
-#: src/ui.c:436
+#: src/ui.c:560
 msgid "first / last"
 msgstr "перший / останній"
 
-#: src/ui.c:437
+#: src/ui.c:561
 msgid "click, wheel, double click to edit"
 msgstr "клік, колесо, подвійний клік - редагувати"
 
-#: src/ui.c:437
+#: src/ui.c:561
 msgid "mouse"
 msgstr "миша"
 
-#: src/ui.c:438
+#: src/ui.c:562
 msgid "Editing"
 msgstr "Редагування"
 
-#: src/ui.c:439
+#: src/ui.c:563
 msgid "edit value (list / bitmask editor if known)"
 msgstr "змінити значення (список / бітова маска, якщо відомі)"
 
-#: src/ui.c:440
+#: src/ui.c:564
 msgid "undo edit of this / all parameters"
 msgstr "скасувати зміну цього / всіх параметрів"
 
-#: src/ui.c:441
+#: src/ui.c:565
 msgid "write modified parameters to the vehicle"
 msgstr "записати змінені параметри в апарат"
 
-#: src/ui.c:442
+#: src/ui.c:566
 msgid "refresh (re-download) all parameters"
 msgstr "оновити (перечитати) всі параметри"
 
-#: src/ui.c:443
+#: src/ui.c:567
+msgid "reboot the flight controller, then re-download"
+msgstr "перезавантажити польотний контролер і перечитати параметри"
+
+#: src/ui.c:568
 msgid "View"
 msgstr "Вигляд"
 
-#: src/ui.c:444
+#: src/ui.c:569
 msgid "search name & description, Esc clears"
 msgstr "пошук за назвою та описом, Esc очищає"
 
-#: src/ui.c:445
+#: src/ui.c:570
 msgid "parameter groups (as in QGroundControl), type to filter"
 msgstr "групи параметрів (як у QGroundControl), друкуйте для фільтра"
 
-#: src/ui.c:446
+#: src/ui.c:571
 msgid "show only parameters edited in this session"
 msgstr "лише параметри, змінені в цій сесії"
 
-#: src/ui.c:447
+#: src/ui.c:572
 msgid "show only parameters that differ from the default"
 msgstr "лише параметри, відмінні від типових"
 
-#: src/ui.c:448
+#: src/ui.c:573
 msgid "toggle favourite (favourites sort first)"
 msgstr "обране (обране показується першим)"
 
-#: src/ui.c:449
+#: src/ui.c:574
 msgid "wrap rows (Mission Planner style)"
 msgstr "перенос рядків (як у Mission Planner)"
 
-#: src/ui.c:450
+#: src/ui.c:575
 msgid "toggle the details pane"
 msgstr "панель деталей"
 
-#: src/ui.c:451
+#: src/ui.c:576
 msgid "descriptions: translation / original English"
 msgstr "описи: переклад / англійський оригінал"
 
-#: src/ui.c:452
+#: src/ui.c:577
 msgid "Files"
 msgstr "Файли"
 
-#: src/ui.c:453
+#: src/ui.c:578
 msgid "save parameters (Mission Planner .param)"
 msgstr "зберегти параметри (.param Mission Planner)"
 
-#: src/ui.c:454
+#: src/ui.c:579
 msgid "load parameters from file (become edits)"
 msgstr "завантажити параметри з файлу (як зміни)"
 
-#: src/ui.c:456
+#: src/ui.c:581
 msgid "quit"
 msgstr "вихід"
 
-#: src/ui.c:465
+#: src/ui.c:590
 #, c-format
 msgid "Full Parameter List %s - keys"
 msgstr "Full Parameter List %s - клавіші"
 
-#: src/ui.c:501
+#: src/ui.c:626
 msgid "terminal too small"
 msgstr "термінал замалий"
 
-#: src/ui.c:589
+#: src/ui.c:714
 #, c-format
 msgid "%d parameter edit not written to the vehicle. Quit anyway?"
 msgid_plural "%d parameter edits not written to the vehicle. Quit anyway?"
@@ -575,46 +599,64 @@ msgstr[0] "%d зміну параметра не записано в апара�
 msgstr[1] "%d зміни параметрів не записано в апарат. Все одно вийти?"
 msgstr[2] "%d змін параметрів не записано в апарат. Все одно вийти?"
 
-#: src/ui.c:736 src/ui.c:746
+#: src/ui.c:730
+#, c-format
+msgid ""
+"Reboot the flight controller? %d edit not written yet stays in the table"
+msgid_plural ""
+"Reboot the flight controller? %d edits not written yet stay in the table"
+msgstr[0] ""
+"Перезавантажити польотний контролер? %d незаписана правка лишиться в таблиці"
+msgstr[1] ""
+"Перезавантажити польотний контролер? %d незаписані правки лишаться в таблиці"
+msgstr[2] ""
+"Перезавантажити польотний контролер? %d незаписаних правок лишиться в "
+"таблиці"
+
+#: src/ui.c:734
+msgid "Reboot the flight controller?"
+msgstr "Перезавантажити польотний контролер?"
+
+#: src/ui.c:876 src/ui.c:886
 msgid "Showing all parameters"
 msgstr "Показано всі параметри"
 
-#: src/ui.c:738
+#: src/ui.c:878
 msgid "Default values are unknown for this vehicle"
 msgstr "Типові значення для цього апарата невідомі"
 
-#: src/ui.c:740
+#: src/ui.c:880
 msgid "Showing parameters that differ from the default (n: all)"
 msgstr "Показано параметри, відмінні від типових (n: усі)"
 
-#: src/ui.c:746
+#: src/ui.c:886
 msgid "Showing modified parameters only (m: all)"
 msgstr "Показано лише змінені параметри (m: усі)"
 
-#: src/ui.c:759
+#: src/ui.c:901
 #, c-format
 msgid "Reverted %s"
 msgstr "Скасовано зміну %s"
 
-#: src/ui.c:764
+#: src/ui.c:906
 msgid "Discard all parameter edits?"
 msgstr "Скасувати всі зміни параметрів?"
 
-#: src/ui.c:776
+#: src/ui.c:918
 msgid "No translation of the parameter descriptions is available"
 msgstr "Перекладу описів параметрів немає"
 
-#: src/ui.c:782
+#: src/ui.c:924
 #, c-format
 msgid "Parameter descriptions: original English%s"
 msgstr "Описи параметрів: англійський оригінал%s"
 
-#: src/ui.c:782
+#: src/ui.c:924
 #, c-format
 msgid "Parameter descriptions: translation (%s)"
 msgstr "Описи параметрів: переклад (%s)"
 
-#: src/ui.c:855
+#: src/ui.c:1000
 #, c-format
 msgid "Discarded %d edit"
 msgid_plural "Discarded %d edits"
@@ -833,7 +875,7 @@ msgstr "У цій групі немає параметрів (Esc: усі гру
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr "Немає параметрів за запитом «%s» (Esc очищає пошук)."
 
-#: src/vehicle.c:120
+#: src/vehicle.c:125
 #, c-format
 msgid "Downloaded %d parameter in %.1f s"
 msgid_plural "Downloaded %d parameters in %.1f s"
@@ -841,26 +883,71 @@ msgstr[0] "Завантажено %d параметр за %.1f с"
 msgstr[1] "Завантажено %d параметри за %.1f с"
 msgstr[2] "Завантажено %d параметрів за %.1f с"
 
-#: src/vehicle.c:123
+#: src/vehicle.c:128
 #, c-format
 msgid "Parameter download incomplete: %d of %d received"
 msgstr "Параметри завантажено не повністю: отримано %d з %d"
 
-#: src/vehicle.c:218
+#: src/vehicle.c:203
+msgid "temporarily rejected"
+msgstr "тимчасово відхилено"
+
+#: src/vehicle.c:205
+msgid "denied"
+msgstr "заборонено"
+
+#: src/vehicle.c:207
+msgid "not supported"
+msgstr "не підтримується"
+
+#: src/vehicle.c:209
+msgid "failed"
+msgstr "помилка виконання"
+
+#: src/vehicle.c:211
+msgid "refused"
+msgstr "відмова"
+
+#: src/vehicle.c:244
+msgid "Waiting for the flight controller to restart..."
+msgstr "Чекаємо, поки польотний контролер перезапуститься..."
+
+#: src/vehicle.c:256
+msgid "The flight controller is rebooting..."
+msgstr "Польотний контролер перезавантажується..."
+
+#: src/vehicle.c:271
+#, c-format
+msgid "The flight controller refused to reboot (%s)"
+msgstr "Польотний контролер відмовився перезавантажуватися (%s)"
+
+#: src/vehicle.c:284
+msgid "The flight controller did not answer the reboot command"
+msgstr "Польотний контролер не відповів на команду перезавантаження"
+
+#: src/vehicle.c:292
+msgid "The flight controller has not come back yet - still waiting"
+msgstr "Польотний контролер ще не повернувся - чекаємо далі"
+
+#: src/vehicle.c:347
+msgid "The flight controller has restarted - reloading the parameters"
+msgstr "Польотний контролер перезапустився - перечитуємо параметри"
+
+#: src/vehicle.c:350
 #, c-format
 msgid "Reconnected via %s"
 msgstr "Підключено знову через %s"
 
-#: src/vehicle.c:220
+#: src/vehicle.c:352
 msgid "Vehicle heartbeat restored"
 msgstr "Heartbeat апарата відновлено"
 
-#: src/vehicle.c:338
+#: src/vehicle.c:478
 #, c-format
 msgid "Link lost (%s) - reconnecting"
 msgstr "Зв'язок втрачено (%s) - перепідключення"
 
-#: src/vehicle.c:408
+#: src/vehicle.c:548
 #, c-format
 msgid "Downloaded %d parameter via MAVFTP in %.1f s"
 msgid_plural "Downloaded %d parameters via MAVFTP in %.1f s"
@@ -868,21 +955,21 @@ msgstr[0] "Завантажено %d параметр через MAVFTP за %.1
 msgstr[1] "Завантажено %d параметри через MAVFTP за %.1f с"
 msgstr[2] "Завантажено %d параметрів через MAVFTP за %.1f с"
 
-#: src/vehicle.c:421
+#: src/vehicle.c:561
 #, c-format
 msgid "MAVFTP unavailable (%s), using PARAM_REQUEST_LIST"
 msgstr "MAVFTP недоступний (%s), використовую PARAM_REQUEST_LIST"
 
-#: src/vehicle.c:461
+#: src/vehicle.c:601
 msgid "No response to parameter list request"
 msgstr "Немає відповіді на запит списку параметрів"
 
-#: src/vehicle.c:518
+#: src/vehicle.c:658
 #, c-format
 msgid "Write %s failed (vehicle value %s)"
 msgstr "Не вдалося записати %s (значення в апараті %s)"
 
-#: src/vehicle.c:533
+#: src/vehicle.c:673
 #, c-format
 msgid "Wrote %d of %d parameter, %d failed"
 msgid_plural "Wrote %d of %d parameters, %d failed"
@@ -890,7 +977,7 @@ msgstr[0] "Записано %d з %d параметра, помилок: %d"
 msgstr[1] "Записано %d з %d параметрів, помилок: %d"
 msgstr[2] "Записано %d з %d параметрів, помилок: %d"
 
-#: src/vehicle.c:536
+#: src/vehicle.c:676
 #, c-format
 msgid "Wrote %d parameter%s"
 msgid_plural "Wrote %d parameters%s"
@@ -898,75 +985,75 @@ msgstr[0] "Записано %d параметр%s"
 msgstr[1] "Записано %d параметри%s"
 msgstr[2] "Записано %d параметрів%s"
 
-#: src/vehicle.c:537
-msgid " - reboot required for changes to take effect"
-msgstr " - щоб зміни набули чинності, потрібне перезавантаження"
+#: src/vehicle.c:677
+msgid " - reboot required for changes to take effect (R)"
+msgstr " - зміни наберуть чинності після перезавантаження (R)"
 
-#: src/vehicle.c:568
+#: src/vehicle.c:709
 msgid "No heartbeat from the vehicle"
 msgstr "Немає heartbeat від апарата"
 
-#: src/vehicle.c:605
+#: src/vehicle.c:746
 msgid "Plane"
 msgstr "Літак"
 
-#: src/vehicle.c:607
+#: src/vehicle.c:748
 msgid "Quadrotor"
 msgstr "Квадрокоптер"
 
-#: src/vehicle.c:609
+#: src/vehicle.c:750
 msgid "Coaxial"
 msgstr "Співвісний гелікоптер"
 
-#: src/vehicle.c:611
+#: src/vehicle.c:752
 msgid "Helicopter"
 msgstr "Гелікоптер"
 
-#: src/vehicle.c:613
+#: src/vehicle.c:754
 msgid "Antenna tracker"
 msgstr "Антенний трекер"
 
-#: src/vehicle.c:615
+#: src/vehicle.c:756
 msgid "Airship"
 msgstr "Дирижабль"
 
-#: src/vehicle.c:617
+#: src/vehicle.c:758
 msgid "Rover"
 msgstr "Наземний апарат"
 
-#: src/vehicle.c:619
+#: src/vehicle.c:760
 msgid "Boat"
 msgstr "Човен"
 
-#: src/vehicle.c:621
+#: src/vehicle.c:762
 msgid "Submarine"
 msgstr "Підводний апарат"
 
-#: src/vehicle.c:623
+#: src/vehicle.c:764
 msgid "Hexarotor"
 msgstr "Гексакоптер"
 
-#: src/vehicle.c:625
+#: src/vehicle.c:766
 msgid "Octorotor"
 msgstr "Октокоптер"
 
-#: src/vehicle.c:627
+#: src/vehicle.c:768
 msgid "Tricopter"
 msgstr "Трикоптер"
 
-#: src/vehicle.c:629
+#: src/vehicle.c:770
 msgid "Dodecarotor"
 msgstr "Додекакоптер"
 
-#: src/vehicle.c:631
+#: src/vehicle.c:772
 msgid "Decarotor"
 msgstr "Декакоптер"
 
-#: src/vehicle.c:639
+#: src/vehicle.c:780
 msgid "VTOL"
 msgstr "VTOL"
 
-#: src/vehicle.c:641
+#: src/vehicle.c:782
 msgid "Vehicle"
 msgstr "Апарат"
 

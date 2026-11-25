@@ -87,6 +87,10 @@ void app_write(app_t *a) {
 		app_msg(a, MSG_ERR, "%s", _("Not connected"));
 		return;
 	}
+	if (vehicle_rebooting(&a->veh)) {
+		app_msg(a, MSG_WARN, "%s", _("Wait for the flight controller to restart"));
+		return;
+	}
 	int n = vehicle_write_pending(&a->veh);
 	if (n == 0)
 		app_msg(a, MSG_INFO, "%s", _("Nothing to write - edit a value first (Enter)"));
@@ -101,8 +105,41 @@ void app_refresh(app_t *a) {
 		app_msg(a, MSG_WARN, "%s", _("Wait for the write to finish"));
 		return;
 	}
+	if (vehicle_rebooting(&a->veh)) {
+		app_msg(a, MSG_WARN, "%s", _("Wait for the flight controller to restart"));
+		return;
+	}
 	vehicle_request_params(&a->veh);
 	app_msg(a, MSG_INFO, "%s", _("Refreshing parameters..."));
+}
+
+bool app_can_reboot(app_t *a) {
+	vehicle_t *v = &a->veh;
+	if (a->phase != PHASE_VEHICLE || !vehicle_alive(v, now_s())) {
+		app_msg(a, MSG_ERR, "%s", _("Not connected"));
+		return false;
+	}
+	if (vehicle_rebooting(v)) {
+		app_msg(a, MSG_WARN, "%s", _("The flight controller is already rebooting"));
+		return false;
+	}
+	/* the autopilot refuses it too; a reboot in the air would bring the vehicle down */
+	if (vehicle_armed(v)) {
+		app_msg(a, MSG_ERR, "%s", _("The vehicle is armed: disarm it before rebooting"));
+		return false;
+	}
+	if (vehicle_writes_in_flight(v)) {
+		app_msg(a, MSG_WARN, "%s", _("Wait for the write to finish"));
+		return false;
+	}
+	return true;
+}
+
+void app_reboot(app_t *a) {
+	if (!app_can_reboot(a)) /* things may have changed while the question was open */
+		return;
+	vehicle_reboot(&a->veh);
+	app_msg(a, MSG_INFO, "%s", _("Rebooting the flight controller..."));
 }
 
 void app_toggle_fav(app_t *a, int idx) {

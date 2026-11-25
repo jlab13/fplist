@@ -4,8 +4,15 @@
  * either ArduPilot (C-cast encoding) or PX4 (byte-wise encoding). Can drop a
  * percentage of streamed PARAM_VALUEs to exercise gap filling.
  *
+ * MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN "reboots" it: silent for --boot-time
+ * seconds, and over TCP the connection and the listening socket go away like
+ * a USB port does; then MAV_STATE_BOOT in the heartbeat for half of that, as
+ * ArduPilot while it starts up. STAT_BOOTCNT (ArduPilot) counts the boots. --armed: the
+ * heartbeat says armed and a reboot is refused.
+ *
  *   fakevehicle [--px4] [--udp HOST:PORT | --tcp PORT | --pty] [--params FILE]
  *               [--count N] [--loss PCT] [--rate N] [--sysid N] [--v1]
+ *               [--no-ftp] [--armed] [--boot-time S]
  */
 #include <arpa/inet.h>
 #include <errno.h>
@@ -42,6 +49,12 @@ static int rate		 = 800;
 static uint8_t sysid = 1;
 static bool v1;
 static bool no_ftp;
+static bool armed;
+static double boot_time	 = 2.0;
+static double reboot_at	 = -1; /* the reboot was accepted: go down then */
+static double down_until = -1; /* "booting": silent until then */
+static double starting_until;  /* back, but MAV_STATE_BOOT until then */
+static int tcp_port;
 
 static int fd = -1, listen_fd = -1, pty_slave = -1;
 static bool is_udp;
@@ -119,6 +132,7 @@ static void builtin_params(int count) {
 		add_param("SERIAL1_PROTOCOL", MAV_PARAM_TYPE_INT8, 2);
 		add_param("WPNAV_SPEED", MAV_PARAM_TYPE_REAL32, 1000);
 		add_param("INS_GYRO_FILTER", MAV_PARAM_TYPE_INT16, 20);
+		add_param("STAT_BOOTCNT", MAV_PARAM_TYPE_INT16, 1);
 	}
 	for (int i = 0; NP < count; i++) {
 		char n[24];
@@ -246,8 +260,10 @@ static void send_heartbeat(void) {
 	mavlink_heartbeat_t hb = {
 			.type		   = MAV_TYPE_QUADROTOR,
 			.autopilot	   = px4 ? MAV_AUTOPILOT_PX4 : MAV_AUTOPILOT_ARDUPILOTMEGA,
-			.base_mode	   = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-			.system_status = MAV_STATE_STANDBY,
+			.base_mode	   = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | (armed ? MAV_MODE_FLAG_SAFETY_ARMED : 0),
+			.system_status = now_s() < starting_until ? MAV_STATE_BOOT
+							 : armed				  ? MAV_STATE_ACTIVE
+													  : MAV_STATE_STANDBY,
 	};
 	mavlink_msg_heartbeat_encode_status(sysid, 1, &txst, &m, &hb);
 	send_msg(&m);
@@ -452,9 +468,20 @@ static void handle(const mavlink_message_t *msg) {
 				c.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
 			send_version();
 			result = MAV_RESULT_ACCEPTED;
+		} else if (c.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN && (int)c.param1 == 1) {
+			/* refused when armed, like the real ones (ArduPilot: FAILED, PX4: DENIED) */
+			result = armed ? (px4 ? MAV_RESULT_DENIED : MAV_RESULT_FAILED) : MAV_RESULT_ACCEPTED;
+			if (!armed && reboot_at < 0)
+				reboot_at = now_s() + 0.2; /* the ACK goes out first */
+			fprintf(stderr, "reboot %s\n", armed ? "refused (armed)" : "accepted");
 		}
 		mavlink_message_t m;
-		mavlink_command_ack_t ack = {.command = c.command, .result = result};
+		mavlink_command_ack_t ack = {
+				.command		  = c.command,
+				.result			  = result,
+				.target_system	  = msg->sysid,
+				.target_component = msg->compid,
+		};
 		mavlink_msg_command_ack_encode_status(sysid, 1, &txst, &m, &ack);
 		send_msg(&m);
 		break;
@@ -473,15 +500,57 @@ static void parse(const uint8_t *b, ssize_t n) {
 	}
 }
 
+static bool tcp_listen(void) {
+	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+	int one	  = 1;
+	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+	struct sockaddr_in a = {.sin_family = AF_INET, .sin_port = htons(tcp_port)};
+	a.sin_addr.s_addr	 = htonl(INADDR_LOOPBACK);
+	if (bind(listen_fd, (struct sockaddr *)&a, sizeof a) < 0 || listen(listen_fd, 1) < 0) {
+		perror("tcp");
+		close(listen_fd);
+		listen_fd = -1;
+		return false;
+	}
+	return true;
+}
+
+/* the reboot: silent for boot_time; over TCP the connection and the listening
+ * socket go away (connection refused), as a USB port vanishes */
+static void go_down(double now) {
+	fprintf(stderr, "rebooting (%.1f s)\n", boot_time);
+	if (tcp_port) {
+		if (fd >= 0)
+			close(fd);
+		fd = -1;
+		close(listen_fd);
+		listen_fd = -1;
+	}
+	stream_idx = -1;
+	memset(&rxst, 0, sizeof rxst);
+	for (int i = 0; i < NP; i++)
+		if (strcmp(P[i].name, "STAT_BOOTCNT") == 0)
+			P[i].value++;
+	down_until = now + boot_time;
+}
+
+static void come_up(void) {
+	down_until	   = -1;
+	starting_until = now_s() + boot_time / 2;
+	if (tcp_port && !tcp_listen())
+		stop = 1;
+	fprintf(stderr, "booted\n");
+}
+
 static void usage(void) {
 	fprintf(stderr, "usage: fakevehicle [--px4] [--udp HOST:PORT | --tcp PORT | --pty]\n"
 					"                   [--params FILE] [--count N] [--loss PCT] [--rate N]\n"
-					"                   [--sysid N] [--v1] [--no-ftp]\n");
+					"                   [--sysid N] [--v1] [--no-ftp] [--armed] [--boot-time S]\n");
 }
 
 int main(int argc, char **argv) {
 	const char *udp = "127.0.0.1:14550", *params = NULL;
-	int tcp_port = 0, count = 1000;
+	int count						= 1000;
 	bool use_pty					= false;
 	static const struct option lo[] = {
 			{"px4",		  no_argument,		 0, 'x'},
@@ -496,6 +565,8 @@ int main(int argc, char **argv) {
 			{"sysid",	  required_argument, 0, 's'},
 			{"v1",		  no_argument,		 0, '1'},
 			{"no-ftp",	  no_argument,		 0, 'F'},
+			{"armed",	  no_argument,		 0, 'A'},
+			{"boot-time", required_argument, 0, 'B'},
 			{"help",	  no_argument,		 0, 'h'},
 			{0,			  0,				 0, 0  },
 	};
@@ -535,6 +606,12 @@ int main(int argc, char **argv) {
 		case 'F':
 			no_ftp = true;
 			break;
+		case 'A':
+			armed = true;
+			break;
+		case 'B':
+			boot_time = atof(optarg);
+			break;
 		case '1':
 			v1 = true;
 			break;
@@ -568,15 +645,8 @@ int main(int argc, char **argv) {
 		printf("%s\n", name);
 		fflush(stdout);
 	} else if (tcp_port) {
-		listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-		int one	  = 1;
-		setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
-		struct sockaddr_in a = {.sin_family = AF_INET, .sin_port = htons(tcp_port)};
-		a.sin_addr.s_addr	 = htonl(INADDR_LOOPBACK);
-		if (bind(listen_fd, (struct sockaddr *)&a, sizeof a) < 0 || listen(listen_fd, 1) < 0) {
-			perror("tcp");
+		if (!tcp_listen())
 			return 1;
-		}
 	} else {
 		is_udp = true;
 		char host[64];
@@ -607,7 +677,8 @@ int main(int argc, char **argv) {
 			uint8_t buf[2048];
 			ssize_t n = is_udp ? recv(fd, buf, sizeof buf, 0) : read(fd, buf, sizeof buf);
 			if (n > 0) {
-				parse(buf, n);
+				if (down_until < 0) /* while "booting" nothing is heard */
+					parse(buf, n);
 			} else if (!is_udp && !use_pty && n == 0) {
 				fprintf(stderr, "client disconnected\n");
 				close(fd);
@@ -616,6 +687,16 @@ int main(int argc, char **argv) {
 			}
 		}
 		double now = now_s();
+		if (reboot_at >= 0 && now >= reboot_at) {
+			reboot_at = -1;
+			go_down(now);
+		}
+		if (down_until >= 0) {
+			if (now < down_until)
+				continue;
+			come_up();
+			next_hb = now;
+		}
 		if (now >= next_hb) {
 			next_hb = now + 1.0;
 			send_heartbeat();

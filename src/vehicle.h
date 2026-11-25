@@ -21,6 +21,14 @@ typedef enum {
 	PDL_FAILED,
 } pdl_state_t;
 
+/* Reboot of the autopilot (MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN) */
+typedef enum {
+	RB_IDLE,
+	RB_SENT,   /* command sent, waiting for its COMMAND_ACK */
+	RB_DOWN,   /* accepted: waiting for the vehicle to go away and come back */
+	RB_SETTLE, /* it talks again: waiting until it finished starting up */
+} reboot_state_t;
+
 typedef void (*vehicle_msg_fn)(void *ctx, int level, const char *text);
 
 enum { MSG_INFO = 0, MSG_OK, MSG_WARN, MSG_ERR };
@@ -71,6 +79,13 @@ typedef struct vehicle {
 	int w_total, w_ok, w_failed;
 	bool w_reboot_needed;
 
+	/* reboot */
+	reboot_state_t rb;
+	double rb_at;		/* when the current reboot state began */
+	bool rb_went_down;	/* link or heartbeat lost since the command */
+	bool rb_warned;		/* "has not come back" reported */
+	double rb_ready_at; /* RB_SETTLE: heartbeat out of MAV_STATE_BOOT, 0 not yet */
+
 	char statustext[160];
 	uint8_t statustext_sev;
 	double statustext_time;
@@ -90,6 +105,13 @@ void vehicle_service(vehicle_t *v, short revents);
 void vehicle_tick(vehicle_t *v, double now);
 
 bool vehicle_alive(const vehicle_t *v, double now);
+bool vehicle_armed(const vehicle_t *v);
+
+/* Reboot the autopilot: sends the command, then follows the vehicle until it
+ * is back and downloads the parameters again. The caller checks first that it
+ * is connected, disarmed and not writing. */
+void vehicle_reboot(vehicle_t *v);
+bool vehicle_rebooting(const vehicle_t *v);
 
 /* Parameter operations */
 void vehicle_request_params(vehicle_t *v);

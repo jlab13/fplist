@@ -22,7 +22,7 @@ typedef enum {
 } ui_mode_t;
 
 typedef enum { PROMPT_SAVE, PROMPT_LOAD } prompt_kind_t;
-typedef enum { CONFIRM_QUIT, CONFIRM_UNDO_ALL } confirm_kind_t;
+typedef enum { CONFIRM_QUIT, CONFIRM_UNDO_ALL, CONFIRM_REBOOT } confirm_kind_t;
 
 typedef struct lineedit {
 	char buf[512];

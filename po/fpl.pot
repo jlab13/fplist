@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fpl 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 01:08+0200\n"
+"POT-Creation-Date: 2026-11-25 20:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,90 +22,106 @@ msgstr ""
 msgid "%s is being written, try again in a moment"
 msgstr ""
 
-#: src/app.c:87
+#: src/app.c:87 src/app.c:119
 msgid "Not connected"
 msgstr ""
 
-#: src/app.c:92
+#: src/app.c:91 src/app.c:109
+msgid "Wait for the flight controller to restart"
+msgstr ""
+
+#: src/app.c:96
 msgid "Nothing to write - edit a value first (Enter)"
 msgstr ""
 
-#: src/app.c:94
+#: src/app.c:98
 #, c-format
 msgid "Writing %d parameter..."
 msgid_plural "Writing %d parameters..."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/app.c:101
+#: src/app.c:105 src/app.c:132
 msgid "Wait for the write to finish"
 msgstr ""
 
-#: src/app.c:105
+#: src/app.c:113
 msgid "Refreshing parameters..."
 msgstr ""
 
+#: src/app.c:123
+msgid "The flight controller is already rebooting"
+msgstr ""
+
+#: src/app.c:128
+msgid "The vehicle is armed: disarm it before rebooting"
+msgstr ""
+
 #: src/app.c:142
+msgid "Rebooting the flight controller..."
+msgstr ""
+
+#: src/app.c:179
 #, c-format
 msgid "Saved %d parameter to %s"
 msgid_plural "Saved %d parameters to %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/app.c:144
+#: src/app.c:181
 #, c-format
 msgid "Save failed: %s"
 msgstr ""
 
-#: src/app.c:153
+#: src/app.c:190
 #, c-format
 msgid "Load failed: %s"
 msgstr ""
 
-#: src/app.c:169
+#: src/app.c:206
 #, c-format
 msgid "Loaded %s: %d changed, %d same, %d not on vehicle%s"
 msgstr ""
 
-#: src/app.c:170
+#: src/app.c:207
 msgid " - press w to write"
 msgstr ""
 
-#: src/app.c:186
+#: src/app.c:223
 #, c-format
 msgid "Connected to %s %s (sysid %u) via %s"
 msgstr ""
 
-#: src/app.c:212
+#: src/app.c:249
 msgid "loading metadata..."
 msgstr ""
 
-#: src/app.c:232
+#: src/app.c:269
 msgid "no metadata"
 msgstr ""
 
-#: src/app.c:300
+#: src/app.c:337
 msgid "fpl: cannot initialise the terminal\n"
 msgstr ""
 
-#: src/app.c:304
+#: src/app.c:341
 msgid "Searching for vehicle...\n"
 msgstr ""
 
-#: src/app.c:365
+#: src/app.c:402
 #, c-format
 msgid "fpl: timeout (%s)\n"
 msgstr ""
 
-#: src/app.c:365
+#: src/app.c:402
 msgid "no vehicle found"
 msgstr ""
 
-#: src/app.c:365
+#: src/app.c:402
 msgid "parameter download"
 msgstr ""
 
-#: src/detect.c:176 src/ui.c:387
+#: src/detect.c:176 src/ui.c:511
 msgid "waiting"
 msgstr ""
 
@@ -294,288 +310,309 @@ msgstr ""
 msgid "metadata: cannot start thread"
 msgstr ""
 
-#: src/ui.c:140
+#: src/ui.c:258
 msgid "searching for vehicle"
 msgstr ""
 
-#: src/ui.c:150
+#: src/ui.c:268
 #, c-format
 msgid "MAVFTP %u%%"
 msgstr ""
 
-#: src/ui.c:152
+#: src/ui.c:270
 #, c-format
 msgid "MAVFTP %.1f KB"
 msgstr ""
 
-#: src/ui.c:159
+#: src/ui.c:277
 #, c-format
 msgid "Params %d/%d %s"
 msgstr ""
 
-#: src/ui.c:161
+#: src/ui.c:279
 msgid "Requesting params..."
 msgstr ""
 
-#: src/ui.c:163
+#: src/ui.c:281
 #, c-format
 msgid "Params %d"
 msgstr ""
 
-#: src/ui.c:168
+#: src/ui.c:286
 #, c-format
 msgid "  │  %d modified"
 msgid_plural "  │  %d modified"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui.c:181
+#: src/ui.c:300
 msgid " ○ NO LINK "
 msgstr ""
 
-#: src/ui.c:181
+#: src/ui.c:300
 msgid " ● LINK "
 msgstr ""
 
-#: src/ui.c:261
+#: src/ui.c:303
+msgid " ○ REBOOTING "
+msgstr ""
+
+#: src/ui.c:385
 msgid " Search: "
 msgstr ""
 
-#: src/ui.c:265
+#: src/ui.c:389
 msgid "  Enter: keep  Esc: clear"
 msgstr ""
 
-#: src/ui.c:299
+#: src/ui.c:423
 #, c-format
 msgid "range %s..%s%s%s  "
 msgstr ""
 
-#: src/ui.c:301
+#: src/ui.c:425
 msgid "Enter: set  Esc: cancel"
 msgstr ""
 
-#: src/ui.c:302
+#: src/ui.c:426
 msgid "  Tab: list"
 msgstr ""
 
-#: src/ui.c:308
+#: src/ui.c:432
 msgid " Load from: "
 msgstr ""
 
-#: src/ui.c:308
+#: src/ui.c:432
 msgid " Save to: "
 msgstr ""
 
-#: src/ui.c:313
+#: src/ui.c:437
 msgid "  Enter: ok  Esc: cancel"
 msgstr ""
 
 #. TRANSLATORS: the answer keys stay y / n
-#: src/ui.c:327
+#: src/ui.c:451
 #, c-format
 msgid " %s  [y/n]"
 msgstr ""
 
-#: src/ui.c:340
+#: src/ui.c:464
 msgid " q: quit"
 msgstr ""
 
-#: src/ui.c:344
+#: src/ui.c:468
 msgid ""
 " ↑↓ move  Enter edit  / search  w write  r refresh  f fav  m modified  n non-"
 "default  g groups  s save  l load  v wrap  d details  t lang  ? help  q quit"
 msgstr ""
 
-#: src/ui.c:368
+#: src/ui.c:492
 msgid "Connecting:"
 msgstr ""
 
-#: src/ui.c:368
+#: src/ui.c:492
 msgid "Looking for a vehicle on these connections:"
 msgstr ""
 
-#: src/ui.c:375
+#: src/ui.c:499
 msgid "Connection"
 msgstr ""
 
-#: src/ui.c:376
+#: src/ui.c:500
 msgid "Status"
 msgstr ""
 
-#: src/ui.c:394
+#: src/ui.c:518
 #, c-format
 msgid " %llu msgs"
 msgstr ""
 
-#: src/ui.c:406
+#: src/ui.c:530
 msgid "(no candidate ports yet - plug in a flight controller)"
 msgstr ""
 
-#: src/ui.c:411
+#: src/ui.c:535
 msgid "Auto-detect (like QGroundControl): USB flight controllers & SiK radios,"
 msgstr ""
 
-#: src/ui.c:412
+#: src/ui.c:536
 msgid "UDP listen on :14550, TCP 127.0.0.1:5760 (ArduPilot SITL)."
 msgstr ""
 
-#: src/ui.c:413
+#: src/ui.c:537
 msgid ""
 "Force a connection:  fpl /dev/ttyACM0   fpl udp:14550   fpl tcp:host:5760"
 msgstr ""
 
-#: src/ui.c:433
+#: src/ui.c:557
 msgid "Navigation"
 msgstr ""
 
-#: src/ui.c:434
+#: src/ui.c:558
 msgid "move"
 msgstr ""
 
-#: src/ui.c:435
+#: src/ui.c:559
 msgid "page"
 msgstr ""
 
-#: src/ui.c:436
+#: src/ui.c:560
 msgid "first / last"
 msgstr ""
 
-#: src/ui.c:437
+#: src/ui.c:561
 msgid "click, wheel, double click to edit"
 msgstr ""
 
-#: src/ui.c:437
+#: src/ui.c:561
 msgid "mouse"
 msgstr ""
 
-#: src/ui.c:438
+#: src/ui.c:562
 msgid "Editing"
 msgstr ""
 
-#: src/ui.c:439
+#: src/ui.c:563
 msgid "edit value (list / bitmask editor if known)"
 msgstr ""
 
-#: src/ui.c:440
+#: src/ui.c:564
 msgid "undo edit of this / all parameters"
 msgstr ""
 
-#: src/ui.c:441
+#: src/ui.c:565
 msgid "write modified parameters to the vehicle"
 msgstr ""
 
-#: src/ui.c:442
+#: src/ui.c:566
 msgid "refresh (re-download) all parameters"
 msgstr ""
 
-#: src/ui.c:443
+#: src/ui.c:567
+msgid "reboot the flight controller, then re-download"
+msgstr ""
+
+#: src/ui.c:568
 msgid "View"
 msgstr ""
 
-#: src/ui.c:444
+#: src/ui.c:569
 msgid "search name & description, Esc clears"
 msgstr ""
 
-#: src/ui.c:445
+#: src/ui.c:570
 msgid "parameter groups (as in QGroundControl), type to filter"
 msgstr ""
 
-#: src/ui.c:446
+#: src/ui.c:571
 msgid "show only parameters edited in this session"
 msgstr ""
 
-#: src/ui.c:447
+#: src/ui.c:572
 msgid "show only parameters that differ from the default"
 msgstr ""
 
-#: src/ui.c:448
+#: src/ui.c:573
 msgid "toggle favourite (favourites sort first)"
 msgstr ""
 
-#: src/ui.c:449
+#: src/ui.c:574
 msgid "wrap rows (Mission Planner style)"
 msgstr ""
 
-#: src/ui.c:450
+#: src/ui.c:575
 msgid "toggle the details pane"
 msgstr ""
 
-#: src/ui.c:451
+#: src/ui.c:576
 msgid "descriptions: translation / original English"
 msgstr ""
 
-#: src/ui.c:452
+#: src/ui.c:577
 msgid "Files"
 msgstr ""
 
-#: src/ui.c:453
+#: src/ui.c:578
 msgid "save parameters (Mission Planner .param)"
 msgstr ""
 
-#: src/ui.c:454
+#: src/ui.c:579
 msgid "load parameters from file (become edits)"
 msgstr ""
 
-#: src/ui.c:456
+#: src/ui.c:581
 msgid "quit"
 msgstr ""
 
-#: src/ui.c:465
+#: src/ui.c:590
 #, c-format
 msgid "Full Parameter List %s - keys"
 msgstr ""
 
-#: src/ui.c:501
+#: src/ui.c:626
 msgid "terminal too small"
 msgstr ""
 
-#: src/ui.c:589
+#: src/ui.c:714
 #, c-format
 msgid "%d parameter edit not written to the vehicle. Quit anyway?"
 msgid_plural "%d parameter edits not written to the vehicle. Quit anyway?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui.c:736 src/ui.c:746
+#: src/ui.c:730
+#, c-format
+msgid ""
+"Reboot the flight controller? %d edit not written yet stays in the table"
+msgid_plural ""
+"Reboot the flight controller? %d edits not written yet stay in the table"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/ui.c:734
+msgid "Reboot the flight controller?"
+msgstr ""
+
+#: src/ui.c:876 src/ui.c:886
 msgid "Showing all parameters"
 msgstr ""
 
-#: src/ui.c:738
+#: src/ui.c:878
 msgid "Default values are unknown for this vehicle"
 msgstr ""
 
-#: src/ui.c:740
+#: src/ui.c:880
 msgid "Showing parameters that differ from the default (n: all)"
 msgstr ""
 
-#: src/ui.c:746
+#: src/ui.c:886
 msgid "Showing modified parameters only (m: all)"
 msgstr ""
 
-#: src/ui.c:759
+#: src/ui.c:901
 #, c-format
 msgid "Reverted %s"
 msgstr ""
 
-#: src/ui.c:764
+#: src/ui.c:906
 msgid "Discard all parameter edits?"
 msgstr ""
 
-#: src/ui.c:776
+#: src/ui.c:918
 msgid "No translation of the parameter descriptions is available"
 msgstr ""
 
-#: src/ui.c:782
+#: src/ui.c:924
 #, c-format
 msgid "Parameter descriptions: original English%s"
 msgstr ""
 
-#: src/ui.c:782
+#: src/ui.c:924
 #, c-format
 msgid "Parameter descriptions: translation (%s)"
 msgstr ""
 
-#: src/ui.c:855
+#: src/ui.c:1000
 #, c-format
 msgid "Discarded %d edit"
 msgid_plural "Discarded %d edits"
@@ -789,135 +826,180 @@ msgstr ""
 msgid "No parameters match \"%s\" (Esc clears the search)."
 msgstr ""
 
-#: src/vehicle.c:120
+#: src/vehicle.c:125
 #, c-format
 msgid "Downloaded %d parameter in %.1f s"
 msgid_plural "Downloaded %d parameters in %.1f s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/vehicle.c:123
+#: src/vehicle.c:128
 #, c-format
 msgid "Parameter download incomplete: %d of %d received"
 msgstr ""
 
-#: src/vehicle.c:218
+#: src/vehicle.c:203
+msgid "temporarily rejected"
+msgstr ""
+
+#: src/vehicle.c:205
+msgid "denied"
+msgstr ""
+
+#: src/vehicle.c:207
+msgid "not supported"
+msgstr ""
+
+#: src/vehicle.c:209
+msgid "failed"
+msgstr ""
+
+#: src/vehicle.c:211
+msgid "refused"
+msgstr ""
+
+#: src/vehicle.c:244
+msgid "Waiting for the flight controller to restart..."
+msgstr ""
+
+#: src/vehicle.c:256
+msgid "The flight controller is rebooting..."
+msgstr ""
+
+#: src/vehicle.c:271
+#, c-format
+msgid "The flight controller refused to reboot (%s)"
+msgstr ""
+
+#: src/vehicle.c:284
+msgid "The flight controller did not answer the reboot command"
+msgstr ""
+
+#: src/vehicle.c:292
+msgid "The flight controller has not come back yet - still waiting"
+msgstr ""
+
+#: src/vehicle.c:347
+msgid "The flight controller has restarted - reloading the parameters"
+msgstr ""
+
+#: src/vehicle.c:350
 #, c-format
 msgid "Reconnected via %s"
 msgstr ""
 
-#: src/vehicle.c:220
+#: src/vehicle.c:352
 msgid "Vehicle heartbeat restored"
 msgstr ""
 
-#: src/vehicle.c:338
+#: src/vehicle.c:478
 #, c-format
 msgid "Link lost (%s) - reconnecting"
 msgstr ""
 
-#: src/vehicle.c:408
+#: src/vehicle.c:548
 #, c-format
 msgid "Downloaded %d parameter via MAVFTP in %.1f s"
 msgid_plural "Downloaded %d parameters via MAVFTP in %.1f s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/vehicle.c:421
+#: src/vehicle.c:561
 #, c-format
 msgid "MAVFTP unavailable (%s), using PARAM_REQUEST_LIST"
 msgstr ""
 
-#: src/vehicle.c:461
+#: src/vehicle.c:601
 msgid "No response to parameter list request"
 msgstr ""
 
-#: src/vehicle.c:518
+#: src/vehicle.c:658
 #, c-format
 msgid "Write %s failed (vehicle value %s)"
 msgstr ""
 
-#: src/vehicle.c:533
+#: src/vehicle.c:673
 #, c-format
 msgid "Wrote %d of %d parameter, %d failed"
 msgid_plural "Wrote %d of %d parameters, %d failed"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/vehicle.c:536
+#: src/vehicle.c:676
 #, c-format
 msgid "Wrote %d parameter%s"
 msgid_plural "Wrote %d parameters%s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/vehicle.c:537
-msgid " - reboot required for changes to take effect"
+#: src/vehicle.c:677
+msgid " - reboot required for changes to take effect (R)"
 msgstr ""
 
-#: src/vehicle.c:568
+#: src/vehicle.c:709
 msgid "No heartbeat from the vehicle"
 msgstr ""
 
-#: src/vehicle.c:605
+#: src/vehicle.c:746
 msgid "Plane"
 msgstr ""
 
-#: src/vehicle.c:607
+#: src/vehicle.c:748
 msgid "Quadrotor"
 msgstr ""
 
-#: src/vehicle.c:609
+#: src/vehicle.c:750
 msgid "Coaxial"
 msgstr ""
 
-#: src/vehicle.c:611
+#: src/vehicle.c:752
 msgid "Helicopter"
 msgstr ""
 
-#: src/vehicle.c:613
+#: src/vehicle.c:754
 msgid "Antenna tracker"
 msgstr ""
 
-#: src/vehicle.c:615
+#: src/vehicle.c:756
 msgid "Airship"
 msgstr ""
 
-#: src/vehicle.c:617
+#: src/vehicle.c:758
 msgid "Rover"
 msgstr ""
 
-#: src/vehicle.c:619
+#: src/vehicle.c:760
 msgid "Boat"
 msgstr ""
 
-#: src/vehicle.c:621
+#: src/vehicle.c:762
 msgid "Submarine"
 msgstr ""
 
-#: src/vehicle.c:623
+#: src/vehicle.c:764
 msgid "Hexarotor"
 msgstr ""
 
-#: src/vehicle.c:625
+#: src/vehicle.c:766
 msgid "Octorotor"
 msgstr ""
 
-#: src/vehicle.c:627
+#: src/vehicle.c:768
 msgid "Tricopter"
 msgstr ""
 
-#: src/vehicle.c:629
+#: src/vehicle.c:770
 msgid "Dodecarotor"
 msgstr ""
 
-#: src/vehicle.c:631
+#: src/vehicle.c:772
 msgid "Decarotor"
 msgstr ""
 
-#: src/vehicle.c:639
+#: src/vehicle.c:780
 msgid "VTOL"
 msgstr ""
 
-#: src/vehicle.c:641
+#: src/vehicle.c:782
 msgid "Vehicle"
 msgstr ""

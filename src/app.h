@@ -67,6 +67,9 @@ void app_clear_pending(app_t *a, int idx);
 int app_clear_all_pending(app_t *a);
 void app_write(app_t *a);
 void app_refresh(app_t *a);
+/* Reboot the flight controller. app_can_reboot() says why not (a message). */
+bool app_can_reboot(app_t *a);
+void app_reboot(app_t *a);
 void app_toggle_fav(app_t *a, int idx);
 void app_save_file(app_t *a, const char *path);
 void app_load_file(app_t *a, const char *path);

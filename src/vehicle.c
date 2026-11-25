@@ -20,6 +20,11 @@
 #define WRITE_TIMEOUT 1.2
 #define WRITE_TRIES 4
 #define WRITE_IN_FLIGHT 8
+#define RB_ACK_TIMEOUT 3.0 /* no COMMAND_ACK: given up, unless the vehicle went quiet */
+#define RB_GONE 2.0		   /* heartbeat silence that means the vehicle is restarting */
+#define RB_BOOT_MAX 20.0   /* back but still MAV_STATE_BOOT: download anyway after this */
+#define RB_SETTLE_TIME 1.0 /* out of MAV_STATE_BOOT: a moment more before the download */
+#define RB_WARN_AFTER 45.0 /* not back yet: say so (and keep waiting) */
 
 static void vmsg(vehicle_t *v, int level, const char *fmt, ...) PRINTF_LIKE(3, 4);
 static void vmsg(vehicle_t *v, int level, const char *fmt, ...) {
@@ -189,6 +194,118 @@ static void on_autopilot_version(vehicle_t *v, const mavlink_message_t *msg) {
 	}
 }
 
+/* ------------------------------------------------------------------------ */
+/* reboot                                                                     */
+
+static const char *mav_result_text(uint8_t r) {
+	switch (r) {
+	case MAV_RESULT_TEMPORARILY_REJECTED:
+		return _("temporarily rejected");
+	case MAV_RESULT_DENIED:
+		return _("denied");
+	case MAV_RESULT_UNSUPPORTED:
+		return _("not supported");
+	case MAV_RESULT_FAILED:
+		return _("failed");
+	default:
+		return _("refused");
+	}
+}
+
+void vehicle_reboot(vehicle_t *v) {
+	mavlink_message_t msg;
+	/* param1 1: reboot the autopilot; the companion computer (param2) is left alone */
+	mavlink_command_long_t c = {
+			.target_system	  = v->sysid,
+			.target_component = v->compid,
+			.command		  = MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN,
+			.param1			  = 1,
+	};
+	mavlink_msg_command_long_encode_status(v->gcs_sysid, v->gcs_compid, &v->link.tx_status, &msg, &c);
+	/* Sent once, never repeated by itself: a repeat that arrives after a reboot
+	 * whose COMMAND_ACK got lost would restart the vehicle a second time */
+	link_send(&v->link, &msg);
+	v->rb			= RB_SENT;
+	v->rb_at		= now_s();
+	v->rb_went_down = false;
+	v->rb_warned	= false;
+	LOG("vehicle: reboot command sent");
+}
+
+bool vehicle_rebooting(const vehicle_t *v) { return v->rb != RB_IDLE; }
+
+/* the vehicle went quiet or its link went away: it is restarting */
+static void reboot_went_down(vehicle_t *v) {
+	if (v->rb_went_down)
+		return;
+	if (v->rb == RB_SENT) /* the COMMAND_ACK was lost, but it restarts */
+		v->rb = RB_DOWN;
+	v->rb_went_down = true;
+	vmsg(v, MSG_INFO, "%s", _("Waiting for the flight controller to restart..."));
+}
+
+static void reboot_accepted(vehicle_t *v) {
+	v->rb	 = RB_DOWN;
+	v->rb_at = now_s();
+	/* a download in progress dies with the reboot; not as an MAVFTP failure,
+	 * which would turn MAVFTP off for the session */
+	if (v->pdl == PDL_FTP)
+		ftp_cancel(&v->ftp);
+	if (v->pdl == PDL_FTP || v->pdl == PDL_LISTING)
+		v->pdl = PDL_IDLE;
+	vmsg(v, MSG_OK, "%s", _("The flight controller is rebooting..."));
+}
+
+static void on_command_ack(vehicle_t *v, const mavlink_message_t *msg) {
+	mavlink_command_ack_t a;
+	mavlink_msg_command_ack_decode(msg, &a);
+	if (a.command != MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN || v->rb != RB_SENT)
+		return;
+	if (a.target_system && a.target_system != v->gcs_sysid)
+		return; /* another GCS asked */
+	LOG("vehicle: reboot COMMAND_ACK result %u", a.result);
+	if (a.result == MAV_RESULT_ACCEPTED) {
+		reboot_accepted(v);
+	} else if (a.result != MAV_RESULT_IN_PROGRESS) {
+		v->rb = RB_IDLE;
+		vmsg(v, MSG_ERR, _("The flight controller refused to reboot (%s)"), mav_result_text(a.result));
+	}
+}
+
+static void tick_reboot(vehicle_t *v, double now) {
+	switch (v->rb) {
+	case RB_IDLE:
+		break;
+	case RB_SENT:
+		if (now - v->last_hb_rx >= RB_GONE && now - v->rb_at >= RB_GONE) {
+			reboot_went_down(v); /* went quiet: the COMMAND_ACK was lost */
+		} else if (now - v->rb_at >= RB_ACK_TIMEOUT) {
+			v->rb = RB_IDLE;
+			vmsg(v, MSG_ERR, "%s", _("The flight controller did not answer the reboot command"));
+		}
+		break;
+	case RB_DOWN:
+		if (!v->rb_went_down && v->link_up && now - v->last_hb_rx >= RB_GONE)
+			reboot_went_down(v);
+		if (!v->rb_warned && now - v->rb_at >= RB_WARN_AFTER) {
+			v->rb_warned = true;
+			vmsg(v, MSG_WARN, "%s", _("The flight controller has not come back yet - still waiting"));
+		}
+		break;
+	case RB_SETTLE:
+		if (!v->rb_ready_at && now - v->rb_at >= RB_BOOT_MAX)
+			v->rb_ready_at = now; /* never says it finished: go ahead */
+		if (v->rb_ready_at && now - v->rb_ready_at >= RB_SETTLE_TIME) {
+			/* values can differ now: parameters that only take effect, or
+			 * only appear, after a reboot */
+			v->rb = RB_IDLE;
+			if (v->pdl != PDL_FTP && v->pdl != PDL_LISTING)
+				vehicle_request_params(v);
+		}
+		break;
+	}
+}
+
 static void on_message(void *ctx, link_t *l, const mavlink_message_t *msg) {
 	vehicle_t *v = ctx;
 	if (msg->sysid != v->sysid)
@@ -200,7 +317,9 @@ static void on_message(void *ctx, link_t *l, const mavlink_message_t *msg) {
 			break;
 		mavlink_heartbeat_t hb;
 		mavlink_msg_heartbeat_decode(msg, &hb);
-		bool was_alive	 = vehicle_alive(v, now_s());
+		bool was_alive = vehicle_alive(v, now_s());
+		if (hb.system_status != v->system_status || hb.base_mode != v->base_mode)
+			LOG("vehicle: heartbeat system_status %u base_mode 0x%02x", hb.system_status, hb.base_mode);
 		v->mav_type		 = hb.type;
 		v->autopilot	 = hb.autopilot;
 		v->base_mode	 = hb.base_mode;
@@ -212,8 +331,21 @@ static void on_message(void *ctx, link_t *l, const mavlink_message_t *msg) {
 			v->mavlink1 = v1;
 			link_set_mavlink1(&v->link, v1);
 		}
-		v->hb_lost = false;
-		if (v->reconnecting) {
+		v->hb_lost	 = false;
+		bool started = hb.system_status != MAV_STATE_BOOT && hb.system_status != MAV_STATE_UNINIT;
+		if (v->rb == RB_SETTLE && !v->rb_ready_at && started)
+			v->rb_ready_at = now_s();
+		if (v->rb == RB_DOWN && v->rb_went_down) {
+			/* back after the reboot. ArduPilot registers parameters while it
+			 * starts up (a SpeedyBee F4 has 928 of its 1082 two seconds after
+			 * the first heartbeat), and says MAV_STATE_BOOT until it is done:
+			 * the download waits for that */
+			v->reconnecting = false;
+			v->rb			= RB_SETTLE;
+			v->rb_at		= now_s();
+			v->rb_ready_at	= started ? v->rb_at : 0;
+			vmsg(v, MSG_OK, "%s", _("The flight controller has restarted - reloading the parameters"));
+		} else if (v->reconnecting) {
 			v->reconnecting = false;
 			vmsg(v, MSG_OK, _("Reconnected via %s"), v->link.name);
 		} else if (!was_alive) {
@@ -221,6 +353,10 @@ static void on_message(void *ctx, link_t *l, const mavlink_message_t *msg) {
 		}
 		break;
 	}
+	case MAVLINK_MSG_ID_COMMAND_ACK:
+		if (msg->compid == v->compid)
+			on_command_ack(v, msg);
+		break;
 	case MAVLINK_MSG_ID_PARAM_VALUE:
 		if (msg->compid == v->compid)
 			on_param_value(v, msg);
@@ -319,6 +455,8 @@ void vehicle_close(vehicle_t *v) {
 
 bool vehicle_alive(const vehicle_t *v, double now) { return v->link_up && now - v->last_hb_rx < HB_TIMEOUT; }
 
+bool vehicle_armed(const vehicle_t *v) { return v->base_mode & MAV_MODE_FLAG_SAFETY_ARMED; }
+
 int vehicle_pollfd(vehicle_t *v, struct pollfd *pfd) {
 	if (!v->link_up || !link_is_open(&v->link))
 		return 0;
@@ -334,7 +472,9 @@ void vehicle_service(vehicle_t *v, short revents) {
 	if (!link_service(&v->link, revents, on_message, v)) {
 		v->link_up		  = false;
 		v->next_reconnect = now_s() + 1.0;
-		if (!v->reconnecting)
+		if (v->rb == RB_SENT || v->rb == RB_DOWN)
+			reboot_went_down(v); /* USB: the port goes away while it restarts */
+		else if (!v->reconnecting)
 			vmsg(v, MSG_ERR, _("Link lost (%s) - reconnecting"), v->link.err);
 		v->reconnecting = true;
 	}
@@ -534,7 +674,7 @@ static void tick_writes(vehicle_t *v, double now) {
 					v->w_total, v->w_failed);
 		else
 			vmsg(v, MSG_OK, ngettext("Wrote %d parameter%s", "Wrote %d parameters%s", v->w_ok), v->w_ok,
-					v->w_reboot_needed ? _(" - reboot required for changes to take effect") : "");
+					v->w_reboot_needed ? _(" - reboot required for changes to take effect (R)") : "");
 		v->w_total = 0;
 		ps->revision++;
 	}
@@ -563,7 +703,8 @@ void vehicle_tick(vehicle_t *v, double now) {
 	if (v->link.connecting)
 		return;
 
-	if (!v->hb_lost && !v->reconnecting && now - v->last_hb_rx >= HB_TIMEOUT) {
+	tick_reboot(v, now);
+	if (!v->hb_lost && !v->reconnecting && v->rb == RB_IDLE && now - v->last_hb_rx >= HB_TIMEOUT) {
 		v->hb_lost = true;
 		vmsg(v, MSG_WARN, "%s", _("No heartbeat from the vehicle"));
 	}

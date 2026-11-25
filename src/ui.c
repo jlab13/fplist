@@ -292,11 +292,17 @@ static void draw_title(app_t *a) {
 			snprintf(right, sizeof right, "%s", a->meta_status);
 	}
 	/* Right side: link indicator always, metadata source when it fits. */
-	const char *ind = NULL;
-	bool alive		= false;
+	const char *ind	 = NULL;
+	bool alive		 = false;
+	uint32_t ind_rgb = 0;
 	if (a->phase == PHASE_VEHICLE) {
-		alive = vehicle_alive(&a->veh, now_s());
-		ind	  = alive ? _(" ● LINK ") : _(" ○ NO LINK ");
+		alive	= vehicle_alive(&a->veh, now_s());
+		ind		= alive ? _(" ● LINK ") : _(" ○ NO LINK ");
+		ind_rgb = alive ? 0xb9f6ca : 0xff8a80;
+		if (vehicle_rebooting(&a->veh)) {
+			ind		= _(" ○ REBOOTING ");
+			ind_rgb = 0xffd180;
+		}
 	}
 	int indw  = ind ? utf8_width(ind) : 0;
 	int lw	  = utf8_width(left);
@@ -311,7 +317,7 @@ static void draw_title(app_t *a) {
 		ui_put(n, 0, W - indw - metaw, metaw, right);
 	}
 	if (ind) {
-		ui_rgb_fg(n, alive ? 0xb9f6ca : 0xff8a80);
+		ui_rgb_fg(n, ind_rgb);
 		ncplane_set_styles(n, NCSTYLE_BOLD);
 		ui_put(n, 0, W - indw, indw, ind);
 		ncplane_set_styles(n, NCSTYLE_NONE);
@@ -558,6 +564,7 @@ static void draw_help(app_t *a) {
 			{"z  Z",	  N_("undo edit of this / all parameters"),						 false},
 			{"w",		  N_("write modified parameters to the vehicle"),				 false},
 			{"r",		  N_("refresh (re-download) all parameters"),					 false},
+			{"R",		  N_("reboot the flight controller, then re-download"),			 false},
 			{NULL,		  N_("View"),													 false},
 			{"/",		  N_("search name & description, Esc clears"),					 false},
 			{"g",		  N_("parameter groups (as in QGroundControl), type to filter"), false},
@@ -711,6 +718,21 @@ static void request_quit(app_t *a) {
 	} else {
 		a->quit = true;
 	}
+}
+
+static void request_reboot(app_t *a) {
+	if (!app_can_reboot(a))
+		return;
+	int pend = ps_pending_count(&a->ps);
+	char t[160];
+	if (pend)
+		snprintf(t, sizeof t,
+				ngettext("Reboot the flight controller? %d edit not written yet stays in the table",
+						"Reboot the flight controller? %d edits not written yet stay in the table", pend),
+				pend);
+	else
+		snprintf(t, sizeof t, "%s", _("Reboot the flight controller?"));
+	confirm(a, CONFIRM_REBOOT, t);
 }
 
 /* The character a key press produced. With the kitty keyboard protocol
@@ -868,8 +890,10 @@ static void normal_key(app_t *a, uint32_t k) {
 		app_write(a);
 		break;
 	case 'r':
-	case 'R':
 		app_refresh(a);
+		break;
+	case 'R':
+		request_reboot(a);
 		break;
 	case 'z':
 		if (sel_param >= 0 && a->ps.v[sel_param].pending) {
@@ -956,8 +980,11 @@ static void prompt_key(app_t *a, uint32_t k) {
 }
 
 static void confirm_key(app_t *a, uint32_t k) {
-	ui_t *u	 = &a->ui;
-	bool yes = k == 'y' || k == 'Y' || k == NCKEY_ENTER || k == '\n' || k == '\r';
+	ui_t *u	   = &a->ui;
+	bool enter = k == NCKEY_ENTER || k == '\n' || k == '\r';
+	/* a reboot only on an explicit y: R by mistake, then Enter for something
+	 * else, must not restart the flight controller */
+	bool yes = k == 'y' || k == 'Y' || (enter && u->confirm_kind != CONFIRM_REBOOT);
 	bool no	 = k == 'n' || k == 'N' || k == NCKEY_ESC || k == 'q';
 	if (!yes && !no)
 		return;
@@ -974,6 +1001,9 @@ static void confirm_key(app_t *a, uint32_t k) {
 		u->view_stale = true;
 		break;
 	}
+	case CONFIRM_REBOOT:
+		app_reboot(a);
+		break;
 	}
 }
 
