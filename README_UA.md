@@ -15,7 +15,7 @@
 ## Збірка
 
 Потрібні: CMake ≥ 3.20, C-компілятор, `pkg-config`, `libcurl`, `expat`, `ncursesw`,
-`libunistring`, `libdeflate` (на Arch: `pacman -S curl expat ncurses libunistring libdeflate`).
+`libunistring`, `zlib` (на Arch: `pacman -S curl expat ncurses libunistring zlib`).
 
 ```sh
 cmake -S . -B build
@@ -28,27 +28,63 @@ MAVLink і cJSON завантажуються CMake (зафіксовані ве
 (без мультимедіа і C++). Примусово використати вбудований: `-DFPL_SYSTEM_NOTCURSES=OFF`.
 Збірка з санітайзерами: `-DFPL_ASAN=ON`.
 
-### Пакет Debian
+### Пакети (deb, rpm)
 
-`tools/deb/build.sh` збирає пакет `fpl` (і `fpl-dbgsym` із символами для gdb) для Debian 13 (trixie) у
-контейнері, тож однаково на будь-якому дистрибутиві. Пакети лягають у `dist/<arch>/`:
+`tools/pkg/build.sh` збирає пакети в контейнері, тож однаково на будь-якому дистрибутиві. Вони лягають у
+`dist/<arch>/`:
+
+| | deb | rpm |
+|---|---|---|
+| Збирається на | Debian 13 | AlmaLinux 10 |
+| Файли | `fpl_0.1.0_amd64.deb`, `fpl-dbgsym_…ddeb` | `fpl-0.1.0-1.x86_64.rpm`, `fpl-debuginfo-…rpm` |
+| Ставиться на | Debian 13, Ubuntu 24.04 і новіші | Fedora, openSUSE Leap 16 / Tumbleweed, RHEL / AlmaLinux / Rocky 10 |
 
 ```sh
-tools/deb/build.sh               # під архітектуру цієї машини
-tools/deb/build.sh arm64         # amd64 або arm64; чужа архітектура йде під QEMU
+tools/pkg/build.sh deb             # під архітектуру цієї машини
+tools/pkg/build.sh rpm arm64       # amd64 або arm64; чужа архітектура йде під QEMU
+tools/pkg/install-test.sh rpm      # поставити й запустити в чистих контейнерах цих систем
+
 sudo apt install ./dist/amd64/fpl_*.deb
+sudo dnf install ./dist/amd64/fpl-0*.rpm      # на openSUSE: zypper install --allow-unsigned-rpm
 ```
 
 - **Що потрібно:** Podman, Docker або Apple `container` (береться перший знайдений; `CONTAINER_ENGINE=`
   вибирає явно). Для чужої архітектури потрібна ще емуляція QEMU
   (`pacman -S qemu-user-static qemu-user-static-binfmt`, `apt install qemu-user-binfmt`).
   Збірка завантажує MAVLink, cJSON і notcurses, тож потрібна мережа.
-- **Що всередині:** у Debian 13 немає notcurses, тому він вшитий статично. Решта бібліотек (curl,
-  expat, ncurses, libunistring, libdeflate) стають залежностями через `dpkg-shlibdeps`.
-- **Версія:** та, що в `project()` у `CMakeLists.txt`, наприклад `fpl_0.1.0_amd64.deb`. Щоб нова збірка
-  ставилася поверх старої, версію треба підняти.
-- **Maintainer:** береться з `git config user.name` / `user.email` того, хто збирає пакет.
-- Спільні налаштування лежать у `cmake/DebPackage.cmake`, контейнер — у `tools/deb/`.
+- **Що всередині:** notcurses вшитий статично (у Debian 13 його немає). Решта бібліотек (curl, expat,
+  ncurses, libunistring, zlib) стають залежностями: у deb через `dpkg-shlibdeps`, у rpm як soname
+  (`libcurl.so.4()(64bit)`, …). Soname не залежить від назви пакета, тому один rpm підходить усім
+  RPM-дистрибутивам. У AlmaLinux 10 найстаріша glibc серед них (2.39), тож rpm не вимагає новішої.
+- **Портабельність вбудованого notcurses:** він збирається з zlib замість libdeflate (у RHEL 10 libdeflate
+  є лише в EPEL), а його `del_curterm(cur_term)` замінюється на `del_curterm(set_curterm(NULL))`. openSUSE
+  збирає ncurses з reentrant ABI, де `cur_term` — функція, і бінарник, зібраний деінде, зупинився б там з
+  «undefined symbol: cur_term» (`cmake/Notcurses.cmake`).
+- **Версія:** та, що в `project()` у `CMakeLists.txt`. Щоб нова збірка ставилася поверх старої, версію треба
+  підняти. Реліз rpm (`-1`) рахує пакування однієї версії.
+- **Maintainer** (deb) / **Vendor** (rpm): `$DEB_MAINTAINER`, якщо задано (CI використовує noreply-адресу
+  автора на GitHub), інакше `git config user.name` / `user.email` того, хто збирає пакет.
+- Налаштування: `cmake/DebPackage.cmake`, `cmake/RpmPackage.cmake`; контейнери і скрипти: `tools/pkg/`.
+
+### CI і релізи
+
+GitHub Actions (`.github/workflows/ci.yml`) запускається на кожен push і pull request:
+
+- перевірка форматування `clang-format` 23.1.3;
+- ASan-збірка з `-Werror` на Ubuntu 24.04 і smoke-тест `tools/ci/smoke.sh`;
+- deb і rpm для amd64 і arm64 (на справжньому ARM-раннері, без QEMU) через `tools/pkg/build.sh`, а потім
+  `tools/pkg/install-test.sh`: пакети ставляться й запускаються на Debian 13, Ubuntu 24.04 і 26.04 (deb) та
+  на Fedora, AlmaLinux 10, openSUSE Leap 16.0 і Tumbleweed (rpm). Пакети зберігаються як артефакти
+  запуску.
+
+Реліз — це тег. Підніміть `project(fpl VERSION …)` у `CMakeLists.txt`, закомітьте, тоді:
+
+```sh
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+Коли всі перевірки пройшли, workflow публікує GitHub Release з пакетами deb і rpm для обох архітектур та
+нотатками, згенерованими з комітів. Тег має збігатися з версією в `CMakeLists.txt`, інакше релізу не буде.
 
 ## Запуск
 
@@ -213,6 +249,10 @@ build/fakevehicle --pty                      # друкує /dev/pts/N — ем�
 build/fakevehicle --no-ftp                   # без MAVFTP: перевірка запасного PARAM_REQUEST_LIST
 ```
 
+`tools/ci/smoke.sh [КАТАЛОГ_ЗБІРКИ]` завантажує з нього параметри через `fpl --dump`: через MAVFTP, через
+`PARAM_REQUEST_LIST`, з 30% втрат пакетів і як PX4, і перевіряє, що всі шляхи дають ті самі значення
+(CI запускає його на ASan-збірці).
+
 PX4 SITL: `docker run --rm -it --network host px4io/px4-sitl:latest`, потім просто `fpl`.
 
 ## Структура
@@ -236,7 +276,9 @@ po/               переклади інтерфейсу (gettext)
 translations/     машинні переклади метаданих PX4 і ArduPilot
 tools/fakevehicle.c
 tools/px4-translate/, tools/ardupilot-translate/   як згенеровано переклади метаданих
-tools/deb/        збірка пакета Debian у контейнері
+tools/pkg/        збірка deb і rpm у контейнерах, тест встановлення
+tools/ci/smoke.sh smoke-тест проти fakevehicle
+.github/workflows/ CI і релізи
 ```
 
 ## Обмеження / що далі

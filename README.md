@@ -15,7 +15,7 @@ The table has the same columns as Mission Planner's "Full Parameter List":
 ## Building
 
 Requirements: CMake ≥ 3.20, a C compiler, `pkg-config`, `libcurl`, `expat`, `ncursesw`,
-`libunistring`, `libdeflate` (on Arch: `pacman -S curl expat ncurses libunistring libdeflate`).
+`libunistring`, `zlib` (on Arch: `pacman -S curl expat ncurses libunistring zlib`).
 
 ```sh
 cmake -S . -B build
@@ -27,27 +27,64 @@ CMake downloads MAVLink and cJSON (pinned versions). If the system has `notcurse
 it is used; otherwise notcurses 3.0.17 is built statically inside `build/` (no multimedia, no C++).
 To force the bundled one: `-DFPL_SYSTEM_NOTCURSES=OFF`. Sanitizer build: `-DFPL_ASAN=ON`.
 
-### Debian package
+### Packages (deb, rpm)
 
-`tools/deb/build.sh` builds the `fpl` package (and `fpl-dbgsym` with the symbols for gdb) for Debian 13
-(trixie) in a container, so it works the same on any distribution. The packages go to `dist/<arch>/`:
+`tools/pkg/build.sh` builds the packages in a container, so it works the same on any distribution.
+They go to `dist/<arch>/`:
+
+| | deb | rpm |
+|---|---|---|
+| Built on | Debian 13 | AlmaLinux 10 |
+| Files | `fpl_0.1.0_amd64.deb`, `fpl-dbgsym_…ddeb` | `fpl-0.1.0-1.x86_64.rpm`, `fpl-debuginfo-…rpm` |
+| Installs on | Debian 13, Ubuntu 24.04 or newer | Fedora, openSUSE Leap 16 / Tumbleweed, RHEL / AlmaLinux / Rocky 10 |
 
 ```sh
-tools/deb/build.sh               # for the architecture of this machine
-tools/deb/build.sh arm64         # amd64 or arm64; another architecture runs under QEMU
+tools/pkg/build.sh deb             # for the architecture of this machine
+tools/pkg/build.sh rpm arm64       # amd64 or arm64; another architecture runs under QEMU
+tools/pkg/install-test.sh rpm      # install and start it in clean containers of those systems
+
 sudo apt install ./dist/amd64/fpl_*.deb
+sudo dnf install ./dist/amd64/fpl-0*.rpm      # zypper install --allow-unsigned-rpm on openSUSE
 ```
 
 - **What you need:** Podman, Docker or Apple `container` (the first one found; `CONTAINER_ENGINE=` picks
   one). For another architecture you also need QEMU user emulation
   (`pacman -S qemu-user-static qemu-user-static-binfmt`, `apt install qemu-user-binfmt`).
   The build downloads MAVLink, cJSON and notcurses, so it needs the network.
-- **What's inside:** Debian 13 has no notcurses, so it is linked statically. The other libraries
-  (curl, expat, ncurses, libunistring, libdeflate) become dependencies through `dpkg-shlibdeps`.
-- **Version:** the one in `project()` of `CMakeLists.txt`, e.g. `fpl_0.1.0_amd64.deb`. To install a new
-  build over an old one, raise it.
-- **Maintainer:** taken from `git config user.name` / `user.email` of whoever builds the package.
-- Common settings are in `cmake/DebPackage.cmake`, and the container is in `tools/deb/`.
+- **What's inside:** notcurses is linked statically (Debian 13 has none). The other libraries (curl, expat,
+  ncurses, libunistring, zlib) become dependencies: through `dpkg-shlibdeps` in the deb, as sonames
+  (`libcurl.so.4()(64bit)`, …) in the rpm. Sonames don't depend on package names, so one rpm fits every
+  RPM distribution. AlmaLinux 10 has the oldest glibc among them (2.39), so the rpm needs no newer one.
+- **Portability of the bundled notcurses:** it is built with zlib instead of libdeflate (RHEL 10 has
+  libdeflate only in EPEL), and its `del_curterm(cur_term)` becomes `del_curterm(set_curterm(NULL))`:
+  openSUSE builds ncurses with the reentrant ABI, where `cur_term` is a function, and a binary built
+  elsewhere would stop there with "undefined symbol: cur_term" (`cmake/Notcurses.cmake`).
+- **Version:** the one in `project()` of `CMakeLists.txt`. To install a new build over an old one, raise it.
+  The rpm release (`-1`) counts the packagings of one version.
+- **Maintainer** (deb) / **Vendor** (rpm): `$DEB_MAINTAINER` if set (CI uses the author's GitHub noreply
+  address), otherwise `git config user.name` / `user.email` of whoever builds the package.
+- Settings: `cmake/DebPackage.cmake`, `cmake/RpmPackage.cmake`; containers and scripts: `tools/pkg/`.
+
+### CI and releases
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push and pull request:
+
+- `clang-format` 23.1.3 check;
+- an ASan build with `-Werror` on Ubuntu 24.04 and the smoke test `tools/ci/smoke.sh`;
+- deb and rpm for amd64 and arm64 (native ARM runner, no QEMU) via `tools/pkg/build.sh`, then
+  `tools/pkg/install-test.sh`: they install and start on Debian 13, Ubuntu 24.04 and 26.04 (deb) and on
+  Fedora, AlmaLinux 10, openSUSE Leap 16.0 and Tumbleweed (rpm). The packages are kept as artifacts of
+  the run.
+
+A release is a tag. Raise `project(fpl VERSION …)` in `CMakeLists.txt`, commit, then:
+
+```sh
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+When all the checks pass, the workflow publishes a GitHub release with the deb and rpm packages for both
+architectures and notes generated from the commits. The tag has to match the version in `CMakeLists.txt`,
+otherwise there is no release.
 
 ## Running
 
@@ -217,6 +254,10 @@ build/fakevehicle --pty                      # prints /dev/pts/N — emulates a 
 build/fakevehicle --no-ftp                   # no MAVFTP: exercises the PARAM_REQUEST_LIST fallback
 ```
 
+`tools/ci/smoke.sh [BUILD_DIR]` downloads the parameters with `fpl --dump` from it over MAVFTP, over
+`PARAM_REQUEST_LIST`, with 30% packet loss and as PX4, and checks that every path gives the same values
+(CI runs it on an ASan build).
+
 PX4 SITL: `docker run --rm -it --network host px4io/px4-sitl:latest`, then just `fpl`.
 
 ## Layout
@@ -240,7 +281,9 @@ po/               UI translations (gettext)
 translations/     machine translations of PX4 and ArduPilot metadata
 tools/fakevehicle.c
 tools/px4-translate/, tools/ardupilot-translate/   how the metadata translations were made
-tools/deb/        Debian package build in a container
+tools/pkg/        deb and rpm builds in containers, install test
+tools/ci/smoke.sh smoke test against fakevehicle
+.github/workflows/ CI and releases
 ```
 
 ## Limitations / next steps
