@@ -139,6 +139,8 @@ void ui_groups_label(struct app *a, char *out, size_t n);
 void ui_fill(struct ncplane *n, int y, int x, int w);
 void ui_put(struct ncplane *n, int y, int x, int w, const char *s);
 void ui_putn(struct ncplane *n, int y, int x, int w, const char *s, int len);
+/* One glyph (a box-drawing character, ...): its ASCII look-alike without UTF-8 */
+void ui_glyph(struct ncplane *n, int y, int x, const char *g);
 void ui_rgb_fg(struct ncplane *n, uint32_t rgb);
 void ui_rgb_bg(struct ncplane *n, uint32_t rgb);
 void ui_default_colors(struct ncplane *n);

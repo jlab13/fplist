@@ -26,6 +26,112 @@ void ui_default_colors(struct ncplane *n) {
 	ncplane_set_styles(n, NCSTYLE_NONE);
 }
 
+/* Without a UTF-8 locale (LANG unset, LANG=C) notcurses prints ASCII only and
+ * drops a string at its first other character, so the title, the grid and
+ * the boxes would lose everything after their first box-drawing glyph. Then
+ * every non-ASCII character becomes one ASCII one: the glyphs of the UI by a
+ * look-alike, typographic characters of the metadata by their plain
+ * counterpart, anything else by '?'. One column each, so layouts hold. */
+static bool ascii_only;
+
+static char ascii_for(uint32_t cp) {
+	switch (cp) {
+	case 0x2502:
+		return '|'; /* │ */
+	case 0x2500:
+	case 0x2013:
+	case 0x2014:
+	case 0x2212:
+		return '-'; /* ─ – — − */
+	case 0x250C:
+	case 0x2510:
+	case 0x2514:
+	case 0x2518:
+		return '+'; /* ┌ ┐ └ ┘ */
+	case 0x00B7:
+	case 0x2026:
+		return '.'; /* · … */
+	case 0x2192:
+	case 0x25B6:
+	case 0x203A:
+	case 0x00BB:
+	case 0x2265:
+		return '>'; /* → ▶ › » ≥ */
+	case 0x2190:
+	case 0x2039:
+	case 0x00AB:
+	case 0x2264:
+		return '<'; /* ← ‹ « ≤ */
+	case 0x2191:
+	case 0x25B2:
+		return '^'; /* ↑ ▲ */
+	case 0x2193:
+	case 0x25BC:
+		return 'v'; /* ↓ ▼ */
+	case 0x25CF:
+	case 0x2022:
+		return '*'; /* ● • */
+	case 0x25CB:
+	case 0x00B0:
+		return 'o'; /* ○ ° */
+	case 0x2588:
+	case 0x2590:
+		return '#'; /* █, ▐ the scrollbar: '|' would look like one more column */
+	case 0x2591:
+		return '.'; /* ░ */
+	case 0x2018:
+	case 0x2019:
+		return '\''; /* ‘ ’ */
+	case 0x201C:
+	case 0x201D:
+		return '"'; /* “ ” */
+	case 0x00D7:
+		return 'x'; /* × */
+	case 0x00B5:
+	case 0x03BC:
+		return 'u'; /* µ μ */
+	case 0x00B1:
+		return '+'; /* ± */
+	case 0x00B2:
+		return '2'; /* ² */
+	case 0x00B3:
+		return '3'; /* ³ */
+	case 0x00A0:
+		return ' '; /* no-break space */
+	}
+	/* the spinner (braille ⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏) as a turning bar */
+	if (cp >= 0x2800 && cp <= 0x28FF) {
+		static const char bar[]		 = "-\\|/";
+		static const uint32_t spin[] = {0x280B, 0x2819, 0x2839, 0x2838, 0x283C, 0x2834, 0x2826, 0x2827, 0x2807, 0x280F};
+		for (size_t i = 0; i < sizeof spin / sizeof spin[0]; i++)
+			if (spin[i] == cp)
+				return bar[i % 4];
+	}
+	return '?';
+}
+
+/* UTF-8 s[0..len) to ASCII, at most n-1 bytes and a NUL; returns the length */
+static int to_ascii(const char *s, int len, char *out, int n) {
+	int o = 0;
+	for (int i = 0; i < len && s[i] && o < n - 1;) {
+		unsigned char c = (unsigned char)s[i];
+		if (c < 0x80) {
+			out[o++] = (char)c;
+			i++;
+			continue;
+		}
+		int k		= c >= 0xF0 ? 3 : c >= 0xE0 ? 2 : c >= 0xC0 ? 1 : 0;
+		uint32_t cp = c & (0x3F >> k);
+		int j		= 1;
+		for (; j <= k && i + j < len && ((unsigned char)s[i + j] & 0xC0) == 0x80; j++)
+			cp = cp << 6 | ((unsigned char)s[i + j] & 0x3F);
+		out[o++] = j == k + 1 && k ? ascii_for(cp) : '?';
+		i += j;
+	}
+	out[o] = '\0';
+	return o;
+}
+
 void ui_fill(struct ncplane *n, int y, int x, int w) {
 	static const char spaces[] = "                                                                ";
 	while (w > 0) {
@@ -41,7 +147,11 @@ void ui_fill(struct ncplane *n, int y, int x, int w) {
 void ui_putn(struct ncplane *n, int y, int x, int w, const char *s, int len) {
 	if (w <= 0)
 		return;
-	char buf[1024];
+	char buf[1024], asc[1024];
+	if (ascii_only) {
+		len = to_ascii(s, len, asc, (int)sizeof asc);
+		s	= asc;
+	}
 	int bl = 0;
 	for (int i = 0; i < len && s[i] && bl < (int)sizeof buf - 1; i++)
 		buf[bl++] = (unsigned char)s[i] < 0x20 || s[i] == 0x7f ? ' ' : s[i];
@@ -54,6 +164,13 @@ void ui_putn(struct ncplane *n, int y, int x, int w, const char *s, int len) {
 		ui_fill(n, y, x + cols, w - cols);
 }
 
+void ui_glyph(struct ncplane *n, int y, int x, const char *g) {
+	if (ascii_only)
+		ui_putn(n, y, x, 1, g, (int)strlen(g));
+	else
+		ncplane_putstr_yx(n, y, x, g);
+}
+
 void ui_put(struct ncplane *n, int y, int x, int w, const char *s) { ui_putn(n, y, x, w, s ? s : "", s ? (int)strlen(s) : 0); }
 
 void ui_box(struct ncplane *n, int y, int x, int h, int w, const char *title) {
@@ -63,17 +180,17 @@ void ui_box(struct ncplane *n, int y, int x, int h, int w, const char *title) {
 		ui_fill(n, y + r, x, w);
 	ui_rgb_fg(n, C_ACCENT);
 	for (int c = 1; c < w - 1; c++) {
-		ncplane_putstr_yx(n, y, x + c, "─");
-		ncplane_putstr_yx(n, y + h - 1, x + c, "─");
+		ui_glyph(n, y, x + c, "─");
+		ui_glyph(n, y + h - 1, x + c, "─");
 	}
 	for (int r = 1; r < h - 1; r++) {
-		ncplane_putstr_yx(n, y + r, x, "│");
-		ncplane_putstr_yx(n, y + r, x + w - 1, "│");
+		ui_glyph(n, y + r, x, "│");
+		ui_glyph(n, y + r, x + w - 1, "│");
 	}
-	ncplane_putstr_yx(n, y, x, "┌");
-	ncplane_putstr_yx(n, y, x + w - 1, "┐");
-	ncplane_putstr_yx(n, y + h - 1, x, "└");
-	ncplane_putstr_yx(n, y + h - 1, x + w - 1, "┘");
+	ui_glyph(n, y, x, "┌");
+	ui_glyph(n, y, x + w - 1, "┐");
+	ui_glyph(n, y + h - 1, x, "└");
+	ui_glyph(n, y + h - 1, x + w - 1, "┘");
 	if (title && *title) {
 		char t[256];
 		snprintf(t, sizeof t, " %s ", title);
@@ -96,7 +213,8 @@ bool ui_init(app_t *a) {
 	u->nc = notcurses_core_init(&o, NULL); /* core: no multimedia deps */
 	if (!u->nc)
 		return false;
-	u->std = notcurses_stdplane(u->nc);
+	u->std	   = notcurses_stdplane(u->nc);
+	ascii_only = !notcurses_canutf8(u->nc);
 	notcurses_mice_enable(u->nc, NCMICE_BUTTON_EVENT);
 	notcurses_linesigs_disable(u->nc);
 	notcurses_stddim_yx(u->nc, &u->rows, &u->cols);

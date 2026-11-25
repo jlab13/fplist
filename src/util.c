@@ -171,19 +171,34 @@ void path_expand_home(const char *in, char *out, size_t n) {
 		xstrlcpy(out, in, n);
 }
 
-/* Decode one UTF-8 character; returns its byte length (>=1) and width. */
+/* Decode one UTF-8 character; returns its byte length (>=1) and width.
+ * Decoded here rather than with mbrtowc(): outside a UTF-8 locale that would
+ * take every byte for a character. The width comes from wcwidth(), which there
+ * says -1 for anything not ASCII: one column, as the UI prints such a
+ * character then (its ASCII fallback, ui.c). */
 static int utf8_char(const char *s, int *w) {
-	mbstate_t st;
-	memset(&st, 0, sizeof st);
-	wchar_t wc;
-	size_t r = mbrtowc(&wc, s, MB_CUR_MAX, &st);
-	if (r == (size_t)-1 || r == (size_t)-2 || r == 0) {
-		*w = 1; /* invalid byte: treat as one column so we never stall */
+	const unsigned char *u = (const unsigned char *)s;
+	*w					   = 1; /* ASCII, and an invalid byte: one column so we never stall */
+	int len;
+	uint32_t cp;
+	if (u[0] < 0x80)
 		return 1;
+	else if ((u[0] & 0xE0) == 0xC0)
+		len = 2, cp = u[0] & 0x1F;
+	else if ((u[0] & 0xF0) == 0xE0)
+		len = 3, cp = u[0] & 0x0F;
+	else if ((u[0] & 0xF8) == 0xF0)
+		len = 4, cp = u[0] & 0x07;
+	else
+		return 1;
+	for (int i = 1; i < len; i++) {
+		if ((u[i] & 0xC0) != 0x80)
+			return 1;
+		cp = cp << 6 | (u[i] & 0x3F);
 	}
-	int cw = wcwidth(wc);
+	int cw = wcwidth((wchar_t)cp);
 	*w	   = cw < 0 ? 1 : cw;
-	return (int)r;
+	return len;
 }
 
 int utf8_width(const char *s) {

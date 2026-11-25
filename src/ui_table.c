@@ -216,7 +216,7 @@ void ui_ensure_visible(app_t *a) {
 static void draw_separators(struct ncplane *n, ui_t *u, int y) {
 	for (int c = 1; c < NCOLS; c++)
 		if (u->col_w[c] > 0 && u->col_x[c] > 0)
-			ncplane_putstr_yx(n, y, u->col_x[c] - 1, "│");
+			ui_glyph(n, y, u->col_x[c] - 1, "│");
 }
 
 static void draw_header(app_t *a, int y) {
@@ -525,7 +525,7 @@ void ui_draw_table(app_t *a) {
 		int bar_y = y0 + (th - bar_h) * u->top / MAX(1, u->nview - u->nrowpos);
 		ui_rgb_fg(n, C_GRID);
 		for (int i = 0; i < bar_h && bar_y + i < y0 + th; i++)
-			ncplane_putstr_yx(n, bar_y + i, (int)u->cols - 1, "▐");
+			ui_glyph(n, bar_y + i, (int)u->cols - 1, "▐");
 		ui_default_colors(n);
 	}
 
