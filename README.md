@@ -23,9 +23,11 @@ cmake --build build -j
 ./build/fpl
 ```
 
-CMake downloads MAVLink and cJSON (pinned versions). If the system has `notcurses-core` ≥ 3.0
+CMake downloads MAVLink (a pinned revision). If the system has `notcurses-core` ≥ 3.0
 it is used; otherwise notcurses 3.0.17 is built statically inside `build/` (no multimedia, no C++).
-To force the bundled one: `-DFPL_SYSTEM_NOTCURSES=OFF`. Sanitizer build: `-DFPL_ASAN=ON`.
+cJSON likewise: the system `libcjson` ≥ 1.7.19, otherwise the bundled 1.7.19.
+To force the bundled ones: `-DFPL_SYSTEM_NOTCURSES=OFF`, `-DFPL_SYSTEM_CJSON=OFF`.
+Sanitizer build: `-DFPL_ASAN=ON`.
 
 ### Packages (deb, rpm)
 
@@ -64,6 +66,22 @@ sudo dnf install ./dist/amd64/fpl-0*.rpm      # zypper install --allow-unsigned-
 - **Maintainer** (deb) / **Vendor** (rpm): `$DEB_MAINTAINER` if set (CI uses the author's GitHub noreply
   address), otherwise `git config user.name` / `user.email` of whoever builds the package.
 - Settings: `cmake/DebPackage.cmake`, `cmake/RpmPackage.cmake`; containers and scripts: `tools/pkg/`.
+
+### Package for Arch Linux
+
+`tools/pkg/arch/PKGBUILD` builds from the release tarball of GitHub, with notcurses and cJSON from
+`[extra]` and MAVLink as a source of the PKGBUILD; `check()` runs `tools/ci/smoke.sh`. On Arch,
+`tools/pkg/arch/build.sh` builds it from the working tree (no container) into `dist/arch/` and checks
+it with `namcap`:
+
+```sh
+sudo pacman -S --needed base-devel cmake notcurses cjson curl expat namcap
+tools/pkg/arch/build.sh
+sudo pacman -U dist/arch/fpl-0.1.0-1-x86_64.pkg.tar.zst
+```
+
+The checksum of the release tarball is `SKIP` until the release the package is published for
+(then `updpkgsums`); `pkgver` has to equal `project()` of `CMakeLists.txt`.
 
 ### CI and releases
 
@@ -282,6 +300,7 @@ translations/     machine translations of PX4 and ArduPilot metadata
 tools/fakevehicle.c
 tools/px4-translate/, tools/ardupilot-translate/   how the metadata translations were made
 tools/pkg/        deb and rpm builds in containers, install test
+tools/pkg/arch/   PKGBUILD for Arch Linux, local build with makepkg
 tools/ci/smoke.sh smoke test against fakevehicle
 .github/workflows/ CI and releases
 ```

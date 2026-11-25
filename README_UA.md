@@ -23,9 +23,10 @@ cmake --build build -j
 ./build/fpl
 ```
 
-MAVLink і cJSON завантажуються CMake (зафіксовані версії). Якщо в системі є
+MAVLink завантажується CMake (зафіксована ревізія). Якщо в системі є
 `notcurses-core` ≥ 3.0, береться він; інакше notcurses 3.0.17 збирається статично в `build/`
-(без мультимедіа і C++). Примусово використати вбудований: `-DFPL_SYSTEM_NOTCURSES=OFF`.
+(без мультимедіа і C++). Так само cJSON: системний `libcjson` ≥ 1.7.19, інакше вбудований 1.7.19.
+Примусово використати вбудовані: `-DFPL_SYSTEM_NOTCURSES=OFF`, `-DFPL_SYSTEM_CJSON=OFF`.
 Збірка з санітайзерами: `-DFPL_ASAN=ON`.
 
 ### Пакети (deb, rpm)
@@ -65,6 +66,21 @@ sudo dnf install ./dist/amd64/fpl-0*.rpm      # на openSUSE: zypper install --
 - **Maintainer** (deb) / **Vendor** (rpm): `$DEB_MAINTAINER`, якщо задано (CI використовує noreply-адресу
   автора на GitHub), інакше `git config user.name` / `user.email` того, хто збирає пакет.
 - Налаштування: `cmake/DebPackage.cmake`, `cmake/RpmPackage.cmake`; контейнери і скрипти: `tools/pkg/`.
+
+### Пакет для Arch Linux
+
+`tools/pkg/arch/PKGBUILD` збирає з релізного архіву GitHub: notcurses і cJSON з `[extra]`, MAVLink —
+джерело самого PKGBUILD; `check()` запускає `tools/ci/smoke.sh`. На Arch `tools/pkg/arch/build.sh`
+збирає його з робочого дерева (без контейнера) у `dist/arch/` і перевіряє `namcap`:
+
+```sh
+sudo pacman -S --needed base-devel cmake notcurses cjson curl expat namcap
+tools/pkg/arch/build.sh
+sudo pacman -U dist/arch/fpl-0.1.0-1-x86_64.pkg.tar.zst
+```
+
+Контрольна сума релізного архіву — `SKIP` до релізу, з яким пакет публікуватиметься (тоді
+`updpkgsums`); `pkgver` має дорівнювати `project()` у `CMakeLists.txt`.
 
 ### CI і релізи
 
@@ -277,6 +293,7 @@ translations/     машинні переклади метаданих PX4 і Ar
 tools/fakevehicle.c
 tools/px4-translate/, tools/ardupilot-translate/   як згенеровано переклади метаданих
 tools/pkg/        збірка deb і rpm у контейнерах, тест встановлення
+tools/pkg/arch/   PKGBUILD для Arch Linux, локальна збірка makepkg
 tools/ci/smoke.sh smoke-тест проти fakevehicle
 .github/workflows/ CI і релізи
 ```

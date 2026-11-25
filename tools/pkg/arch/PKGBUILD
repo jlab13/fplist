@@ -1,0 +1,44 @@
+# Maintainer: JLab13 <1358048+JLab13@users.noreply.github.com>
+#
+# The package of Arch Linux (and the AUR), from the release tarball of GitHub. notcurses and
+# cJSON are the packages of [extra]; MAVLink (generated headers, no package) is a source here.
+# tools/pkg/arch/build.sh builds it from the working tree instead, under the same tarball name
+# (its checksum is SKIP until the release it is published for: then updpkgsums).
+
+pkgname=fpl
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Terminal editor of ArduPilot and PX4 parameters over MAVLink, like the Full Parameter List of Mission Planner'
+arch=(x86_64 aarch64)
+url='https://github.com/jlab13/fplist'
+license=(MIT)
+depends=(glibc cjson curl expat notcurses)
+makedepends=(cmake)
+# the revision CMakeLists.txt names (FPL_MAVLINK_REV)
+_mavlink=d2062a25f05fc85213830427058401b0ec345430
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz"
+	"mavlink-$_mavlink.tar.gz::https://github.com/mavlink/c_library_v2/archive/$_mavlink.tar.gz")
+sha256sums=('SKIP'
+	'270eb2f37bf08cdcc313f87b7d795c4bbc10b6d230828f73485edc6de54e7a9e')
+
+build() {
+	# FULLY_DISCONNECTED: nothing is downloaded during the build, a missing library stops it
+	cmake -S "fplist-$pkgver" -B build \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DFPL_SYSTEM_NOTCURSES=ON \
+		-DFPL_SYSTEM_CJSON=ON \
+		-DFETCHCONTENT_SOURCE_DIR_MAVLINK="$srcdir/c_library_v2-$_mavlink" \
+		-DFETCHCONTENT_FULLY_DISCONNECTED=ON
+	cmake --build build
+}
+
+check() {
+	# fpl --dump against tools/fakevehicle over TCP on 127.0.0.1: no hardware, no network
+	"fplist-$pkgver/tools/ci/smoke.sh" build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	install -Dm644 "fplist-$pkgver/LICENSE" -t "$pkgdir/usr/share/licenses/$pkgname/"
+}

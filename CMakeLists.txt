@@ -11,6 +11,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 option(FPL_SYSTEM_NOTCURSES "Use system notcurses if available" ON)
+option(FPL_SYSTEM_CJSON "Use system cJSON if available" ON)
 option(FPL_ASAN "Build with AddressSanitizer/UBSan" OFF)
 option(FPL_NLS "Native language support (gettext translations)" ON)
 
@@ -29,14 +30,27 @@ add_library(mavlink INTERFACE)
 target_include_directories(mavlink SYSTEM INTERFACE ${mavlink_SOURCE_DIR})
 
 # --- cJSON (PX4 parameter metadata) -------------------------------------------
-# SOURCE_SUBDIR points nowhere: download only, we compile cJSON.c ourselves.
-FetchContent_Declare(cjson
-  URL https://github.com/DaveGamble/cJSON/archive/refs/tags/v1.7.19.tar.gz
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-  SOURCE_SUBDIR _none)
-FetchContent_MakeAvailable(cjson)
-add_library(cjson STATIC ${cjson_SOURCE_DIR}/cJSON.c)
-target_include_directories(cjson SYSTEM PUBLIC ${cjson_SOURCE_DIR})
+# The system libcjson when FPL_SYSTEM_CJSON is ON and pkg-config finds 1.7.19 or newer (the
+# Arch package), otherwise the bundled one: the containers of the deb and rpm have no libcjson.
+add_library(fpl_cjson INTERFACE)
+if(FPL_SYSTEM_CJSON)
+  pkg_check_modules(CJSON QUIET IMPORTED_TARGET libcjson>=1.7.19)
+endif()
+if(CJSON_FOUND)
+  message(STATUS "cJSON: using system libcjson ${CJSON_VERSION}")
+  target_link_libraries(fpl_cjson INTERFACE PkgConfig::CJSON)
+else()
+  message(STATUS "cJSON: building bundled cJSON 1.7.19")
+  # SOURCE_SUBDIR points nowhere: download only, we compile cJSON.c ourselves.
+  FetchContent_Declare(cjson
+    URL https://github.com/DaveGamble/cJSON/archive/refs/tags/v1.7.19.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SOURCE_SUBDIR _none)
+  FetchContent_MakeAvailable(cjson)
+  add_library(cjson STATIC ${cjson_SOURCE_DIR}/cJSON.c)
+  target_include_directories(cjson SYSTEM PUBLIC ${cjson_SOURCE_DIR})
+  target_link_libraries(fpl_cjson INTERFACE cjson)
+endif()
 
 # --- notcurses ----------------------------------------------------------------
 include(cmake/Notcurses.cmake)
@@ -70,7 +84,7 @@ target_compile_definitions(fpl PRIVATE FPL_VERSION="${PROJECT_VERSION}" _GNU_SOU
 # snprintf truncation into fixed UI/status buffers is intentional
 target_compile_options(fpl PRIVATE -Wall -Wextra -Wshadow -Wno-unused-parameter
   -Wno-address-of-packed-member -Wno-format-truncation)
-target_link_libraries(fpl PRIVATE mavlink cjson fpl_notcurses
+target_link_libraries(fpl PRIVATE mavlink fpl_cjson fpl_notcurses
   PkgConfig::EXPAT PkgConfig::CURL Threads::Threads m)
 
 # --- bundled data (machine translations of PX4 metadata) ---------------------
