@@ -142,7 +142,12 @@ static void next(ftp_t *f, double now, bool burst_ended) {
 	if (f->size >= 0) {
 		uint32_t gap = first_gap(f, (uint32_t)f->size);
 		if (gap >= (uint32_t)f->size) {
-			finish(f);
+			/* all up to the end a burst's EOF showed: ask past it, the EOF
+			 * of a plain read there confirms it */
+			if (f->size_unsure)
+				request(f, OP_READ, f->session, (uint32_t)f->size, FTP_DATA_MAX, NULL, 0, now);
+			else
+				finish(f);
 			return;
 		}
 		/* holes: fill with plain reads; a big remainder: another burst */
@@ -221,9 +226,17 @@ void ftp_handle(ftp_t *f, const uint8_t p[FTP_PAYLOAD_LEN], double now) {
 			fail(f, why);
 			return;
 		}
-		/* EOF is the only reliable end: the open reply's size may be an estimate */
-		if (f->size < 0 || f->hi < f->size)
-			f->size = f->hi;
+		/* EOF is the only reliable end: the open reply's size may be an
+		 * estimate. A plain read's EOF at offset X: the file is X bytes. A
+		 * burst's: it ends at the last byte that arrived, unless the last
+		 * packets were lost, so that is checked (next()) */
+		if (req == OP_READ) {
+			f->size		   = MAX(rd32(f->last_req + P_OFFSET), f->hi);
+			f->size_unsure = false;
+		} else if (f->size < 0 || f->hi > f->size) {
+			f->size		   = f->hi;
+			f->size_unsure = true;
+		}
 		next(f, now, true);
 		return;
 	}
@@ -240,11 +253,15 @@ void ftp_handle(ftp_t *f, const uint8_t p[FTP_PAYLOAD_LEN], double now) {
 		}
 	if (off + size > f->hi)
 		f->hi = off + size;
+	/* data past the end an EOF suggested: its tail had been lost, the end is
+	 * unknown again */
+	if (f->size >= 0 && off + size > (uint32_t)f->size)
+		f->size = -1;
 	/* plain read replies and the end of a burst drive the next request */
 	if (req == OP_READ || p[P_BURST_COMPLETE])
 		next(f, now, true);
 	else if (f->size >= 0 && f->received >= (uint32_t)f->size)
-		finish(f);
+		next(f, now, false); /* done, or the end to confirm */
 }
 
 void ftp_tick(ftp_t *f, double now) {

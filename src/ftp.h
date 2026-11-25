@@ -33,6 +33,8 @@ typedef struct ftp {
 	uint32_t cap;
 	uint32_t hi;	   /* highest received byte + 1 */
 	int64_t size;	   /* file size, known once EOF was reached, else -1 */
+	bool size_unsure;  /* `size` comes from a burst's EOF: the end of what
+						* arrived, and a lost tail would look the same */
 	int64_t size_hint; /* size from the open reply: ArduPilot reports an upper
 						* estimate for generated files, so only for progress */
 	uint32_t received; /* bytes received (unique) */
